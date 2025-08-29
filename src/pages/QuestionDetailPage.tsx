@@ -218,4 +218,3 @@ const QuestionDetailPage: React.FC = () => {
 };
 
 export default QuestionDetailPage;
-

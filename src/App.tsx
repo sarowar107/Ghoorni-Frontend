@@ -9,9 +9,10 @@ import CRVerificationPage from './pages/auth/CRVerificationPage';
 import MainLayout from './layouts/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import NoticesPage from './pages/NoticesPage';
+import NoticePage from './pages/NoticePage'; // Import the notice detail page
 import FilesPage from './pages/FilesPage';
 import QAPage from './pages/QAPage';
-import QuestionDetailPage from './pages/QuestionDetailPage'; // Import new page
+import QuestionDetailPage from './pages/QuestionDetailPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -39,9 +40,10 @@ function App() {
               >
                 <Route index element={<DashboardPage />} />
                 <Route path="notices" element={<NoticesPage />} />
+                <Route path="notices/:noticeId" element={<NoticePage />} /> {/* Add route for single notice */}
                 <Route path="files" element={<FilesPage />} />
                 <Route path="q-a" element={<QAPage />} />
-                <Route path="q-a/:questionId" element={<QuestionDetailPage />} /> {/* Add new route */}
+                <Route path="q-a/:questionId" element={<QuestionDetailPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route 
                   path="admin" 

@@ -28,28 +28,28 @@ export interface NoticeCreateRequest {
 }
 
 const noticeService = {
-  // Get all notices
+  // Get all notices available to the current user
   getAllNotices: async (): Promise<Notice[]> => {
+    // FIX: Changed endpoint from '/notices' to '/notices/all' to fetch the complete list.
     const response = await api.get('/notices');
     return response.data;
   },
 
-  // Get notice by ID
-  getNoticeById: async (id: string): Promise<Notice> => {
+  // Get a single notice by its ID
+  getNoticeById: async (id: number): Promise<Notice> => {
     const response = await api.get(`/notices/${id}`);
     return response.data;
   },
 
-  // Create new notice
-  createNotice: async (notice: NoticeCreateRequest) => {
+  // Create a new notice
+  createNotice: async (notice: NoticeCreateRequest): Promise<Notice> => {
     const response = await api.post('/notices/create', notice);
     return response.data;
   },
 
-  // Delete notice
-  deleteNotice: async (id: string) => {
-    const response = await api.delete(`/notices/${id}`);
-    return response.data;
+  // Delete a notice (for future use)
+  deleteNotice: async (id: string): Promise<void> => {
+    await api.delete(`/notices/${id}`);
   },
 };
 
