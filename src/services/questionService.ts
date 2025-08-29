@@ -1,30 +1,40 @@
 import api from './api';
 
 export interface Question {
-  id: string;
+  questionId: string;
   title: string;
-  content: string;
+  description: string;
   createdAt: string;
+  updatedAt: string;
   askedBy: {
     userId: string;
     name: string;
+    email: string;
+    deptName: string;
+    batch: string;
+    role: string;
   };
   answers: Answer[];
 }
 
 export interface Answer {
-  id: string;
+  ansId: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
   answeredBy: {
     userId: string;
     name: string;
+    email: string;
+    deptName: string;
+    batch: string;
+    role: string;
   };
 }
 
 export interface QuestionCreateRequest {
   title: string;
-  content: string;
+  description: string;
 }
 
 export interface AnswerCreateRequest {
@@ -39,33 +49,26 @@ const questionService = {
     return response.data;
   },
 
-  // Get question by ID
-  getQuestionById: async (id: string) => {
-    const response = await api.get(`/questions/${id}`);
-    return response.data;
+  // Get question by ID and its answers
+  getQuestionById: async (questionId: string) => {
+    try {
+      const response = await api.get(`/questions/${questionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching question:', error);
+      throw error;
+    }
   },
 
   // Create new question
   createQuestion: async (question: QuestionCreateRequest) => {
-    const response = await api.post('/questions', question);
+    const response = await api.post('/questions/ask', question);
     return response.data;
   },
 
-  // Delete question
-  deleteQuestion: async (id: string) => {
-    const response = await api.delete(`/questions/${id}`);
-    return response.data;
-  },
-
-  // Add answer to question
+  // Add answer to a question
   addAnswer: async (answer: AnswerCreateRequest) => {
-    const response = await api.post('/answers', answer);
-    return response.data;
-  },
-
-  // Delete answer
-  deleteAnswer: async (id: string) => {
-    const response = await api.delete(`/answers/${id}`);
+    const response = await api.post('/answers/submit', answer);
     return response.data;
   },
 };

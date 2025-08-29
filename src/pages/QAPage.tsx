@@ -1,40 +1,49 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { MessageSquarePlus, Search, MessageSquare, Loader } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import questionService, { Question } from '../services/questionService';
-
-
+import AskQuestionModal from '../components/qa/AskQuestionModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const QAPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await questionService.getAllQuestions();
-        setQuestions(data);
-      } catch (err) {
-        console.error('Error fetching questions:', err);
-        setError('Failed to load questions. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchQuestions();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  const fetchQuestions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await questionService.getAllQuestions();
+      setQuestions(data);
+    } catch (err) {
+      console.error('Error fetching questions:', err);
+      setError('Failed to load questions. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredQuestions = useMemo(() => {
-    return questions.filter(q =>
-      q.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
+
+  const handleQuestionAsked = () => {
+    setIsModalOpen(false);
+    fetchQuestions();
+  };
+
+  const filteredAndSortedQuestions = useMemo(() => {
+    return questions
+      .filter(q =>
+        q.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [searchTerm, questions]);
 
   return (
@@ -50,7 +59,12 @@ const QAPage: React.FC = () => {
               Ask questions, share knowledge, and learn from the community.
             </p>
           </div>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-cuet-primary-900 text-white font-semibold rounded-lg shadow-md hover:bg-cuet-primary-800 transition-colors duration-200">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            disabled={!user}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-cuet-primary-900 text-white font-semibold rounded-lg shadow-md hover:bg-cuet-primary-800 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            title={!user ? "You must be logged in to ask a question" : "Ask a new question"}
+          >
             <MessageSquarePlus size={20} />
             Ask a Question
           </button>
@@ -83,16 +97,16 @@ const QAPage: React.FC = () => {
               <div className="text-red-500 text-center">
                 <h3 className="text-xl font-semibold">Error</h3>
                 <p className="mt-2">{error}</p>
-                <button 
-                  onClick={() => window.location.reload()}
+                <button
+                  onClick={fetchQuestions}
                   className="mt-4 px-4 py-2 bg-cuet-primary-900 text-white rounded-lg hover:bg-cuet-primary-800"
                 >
                   Try Again
                 </button>
               </div>
             </div>
-          ) : filteredQuestions.length > 0 ? (
-            filteredQuestions.map(q => <QuestionCard key={q.id} question={q} />)
+          ) : filteredAndSortedQuestions.length > 0 ? (
+            filteredAndSortedQuestions.map(q => <QuestionCard key={q.questionId} question={q} />)
           ) : (
             <div className="text-center py-12 bg-white dark:bg-dark-surface rounded-lg">
               <MessageSquare size={48} className="mx-auto text-gray-400" />
@@ -104,18 +118,20 @@ const QAPage: React.FC = () => {
           )}
         </div>
       </div>
+      <AskQuestionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onQuestionAsked={handleQuestionAsked}
+      />
     </>
   );
 };
 
 const QuestionCard = ({ question }: { question: Question }) => (
-  <Link to={`/q-a/${question.id}`} className="block">
+  <Link to={`/q-a/${question.questionId}`} className="block group">
     <div className="bg-white dark:bg-dark-surface rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-5 border border-gray-200 dark:border-dark-border">
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex sm:flex-col items-center sm:justify-center gap-2 sm:gap-0 text-center p-2 rounded-lg bg-gray-50 dark:bg-dark-border w-full sm:w-24">
-          <span className="font-bold text-xl text-cuet-primary-900 dark:text-cuet-primary-300">0</span>
-          <span className="text-sm text-gray-600 dark:text-dark-text-secondary">votes</span>
-          <div className="border-t border-gray-200 dark:border-dark-text-secondary/50 my-1 w-full"></div>
+        <div className="flex sm:flex-col items-center sm:justify-center gap-2 sm:gap-0 text-center p-2 rounded-lg bg-gray-50 dark:bg-dark-border w-full sm:w-20">
           <span className="font-bold text-xl text-cuet-primary-900 dark:text-cuet-primary-300">
             {question.answers ? question.answers.length : 0}
           </span>
