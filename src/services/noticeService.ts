@@ -47,8 +47,8 @@ const noticeService = {
     return response.data;
   },
 
-  // Delete a notice (for future use)
-  deleteNotice: async (id: string): Promise<void> => {
+  // Delete a notice
+  deleteNotice: async (id: number): Promise<void> => {
     await api.delete(`/notices/${id}`);
   },
 };

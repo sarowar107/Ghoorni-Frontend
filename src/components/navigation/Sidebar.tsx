@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         {navItems.map((item) => (
           <NavItem key={item.name} item={item} currentPath={location.pathname} />
         ))}
-        {user?.role === 'ADMIN' && <NavItem item={adminNav} currentPath={location.pathname} />}
+        {user?.role === 'admin' && <NavItem item={adminNav} currentPath={location.pathname} />}
       </nav>
       <div className="px-4 py-6 border-t border-gray-200 dark:border-dark-border">
         <NavItem item={profileNav} currentPath={location.pathname} />

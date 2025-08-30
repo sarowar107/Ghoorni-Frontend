@@ -66,10 +66,20 @@ const questionService = {
     return response.data;
   },
 
-  // Add answer to a question
-  addAnswer: async (answer: AnswerCreateRequest) => {
+  // Submit a new answer
+  submitAnswer: async (answer: AnswerCreateRequest): Promise<Answer> => {
     const response = await api.post('/answers/submit', answer);
     return response.data;
+  },
+
+  // Delete a question
+  deleteQuestion: async (questionId: number): Promise<void> => {
+    await api.delete(`/questions/${questionId}`);
+  },
+
+  // Delete an answer
+  deleteAnswer: async (answerId: number): Promise<void> => {
+    await api.delete(`/answers/${answerId}`);
   },
 };
 

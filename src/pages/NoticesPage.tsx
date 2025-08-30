@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { PlusCircle, Search, FileText, User, Calendar, Clock, AlertCircle, Loader, RefreshCw } from 'lucide-react';
+import { PlusCircle, Search, FileText, User, Calendar, Clock, AlertCircle, Loader, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { format, parseISO, isPast, formatDistanceToNowStrict } from 'date-fns';
 import CreateNoticeModal from '../components/modals/CreateNoticeModal';
@@ -25,6 +25,13 @@ const NoticesPage: React.FC = () => {
 
   const createNoticeMutation = useMutation({
     mutationFn: (newNotice: NoticeCreateRequest) => noticeService.createNotice(newNotice),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notices'] });
+    },
+  });
+
+  const deleteNoticeMutation = useMutation({
+    mutationFn: (noticeId: number) => noticeService.deleteNotice(noticeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notices'] });
     },
@@ -165,26 +172,65 @@ const NoticeCard = ({ notice }: { notice: Notice }) => {
 
   const timeStatus = getTimeStatus();
 
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const deleteNoticeMutation = useMutation({
+    mutationFn: (id: number) => noticeService.deleteNotice(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notices'] });
+    },
+  });
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (window.confirm('Are you sure you want to delete this notice?')) {
+      try {
+        await deleteNoticeMutation.mutateAsync(notice.noticeId);
+      } catch (err) {
+        console.error('Failed to delete notice:', err);
+        alert('Failed to delete notice. Please try again.');
+      }
+    }
+  };
+
+  const canDelete = user?.role === 'admin' || user?.userId === notice.createdBy.userId;
+
   return (
-    <Link to={`/notices/${notice.noticeId}`} className="block bg-white dark:bg-dark-surface rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-dark-border group">
-      <div className="flex justify-between items-start gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-cuet-primary-900 dark:text-cuet-primary-300 mb-2 group-hover:underline">{notice.title}</h2>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 dark:text-dark-text-secondary mb-4">
-            <div className="flex items-center gap-1.5"><User size={14} /><span>{notice.createdBy.name}</span></div>
-            <div className="flex items-center gap-1.5"><Calendar size={14} /><span>{format(parseISO(notice.createdAt), 'MMM d, yyyy')}</span></div>
+    <div className="bg-white dark:bg-dark-surface rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-dark-border group">
+      <Link to={`/notices/${notice.noticeId}`} className="block">
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-cuet-primary-900 dark:text-cuet-primary-300 mb-2 group-hover:underline">{notice.title}</h2>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500 dark:text-dark-text-secondary mb-4">
+              <div className="flex items-center gap-1.5"><User size={14} /><span>{notice.createdBy.name}</span></div>
+              <div className="flex items-center gap-1.5"><Calendar size={14} /><span>{format(parseISO(notice.createdAt), 'MMM d, yyyy')}</span></div>
+            </div>
+          </div>
+          <div className={`flex items-center gap-2 text-sm font-medium shrink-0 ${timeStatus.color}`}>
+            <Clock size={14} />
+            <span>{timeStatus.text}</span>
           </div>
         </div>
-        <div className={`flex items-center gap-2 text-sm font-medium shrink-0 ${timeStatus.color}`}>
-          <Clock size={14} />
-          <span>{timeStatus.text}</span>
+        <p className="text-gray-700 dark:text-dark-text leading-relaxed line-clamp-2">{notice.content}</p>
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm font-semibold text-cuet-primary-800 dark:text-cuet-primary-400 group-hover:underline">
+            Read More &rarr;
+          </div>
+          {canDelete && (
+            <button
+              onClick={handleDelete}
+              className="p-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-4"
+              title="Delete notice"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
         </div>
-      </div>
-      <p className="text-gray-700 dark:text-dark-text leading-relaxed line-clamp-2">{notice.content}</p>
-      <div className="mt-4 text-sm font-semibold text-cuet-primary-800 dark:text-cuet-primary-400 group-hover:underline">
-        Read More &rarr;
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 };
 

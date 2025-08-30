@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import { MessageSquarePlus, Search, MessageSquare, Loader } from 'lucide-react';
+import { MessageSquarePlus, Search, MessageSquare, Loader, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import questionService, { Question } from '../services/questionService';
 import AskQuestionModal from '../components/qa/AskQuestionModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -127,27 +128,63 @@ const QAPage: React.FC = () => {
   );
 };
 
-const QuestionCard = ({ question }: { question: Question }) => (
-  <Link to={`/q-a/${question.questionId}`} className="block group">
-    <div className="bg-white dark:bg-dark-surface rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-5 border border-gray-200 dark:border-dark-border">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex sm:flex-col items-center sm:justify-center gap-2 sm:gap-0 text-center p-2 rounded-lg bg-gray-50 dark:bg-dark-border w-full sm:w-20">
-          <span className="font-bold text-xl text-cuet-primary-900 dark:text-cuet-primary-300">
-            {question.answers ? question.answers.length : 0}
-          </span>
-          <span className="text-sm text-gray-600 dark:text-dark-text-secondary">answers</span>
-        </div>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white group-hover:text-cuet-primary-800 dark:group-hover:text-cuet-primary-400 transition-colors">
-            {question.title}
-          </h2>
-          <div className="flex items-center justify-end gap-2 text-xs text-gray-500 dark:text-dark-text-secondary mt-3 pt-3 border-t border-gray-100 dark:border-dark-border">
-            <span>asked by <strong>{question.askedBy?.name || 'Unknown'}</strong> on {format(parseISO(question.createdAt), 'MMM d, yyyy')}</span>
+const QuestionCard = ({ question }: { question: Question }) => {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'admin' || user?.userId === question.askedBy.userId;
+  const queryClient = useQueryClient();
+
+  const deleteQuestionMutation = useMutation({
+    mutationFn: (id: number) => questionService.deleteQuestion(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+    },
+  });
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (window.confirm('Are you sure you want to delete this question?')) {
+      try {
+        await deleteQuestionMutation.mutateAsync(parseInt(question.questionId));
+      } catch (err) {
+        console.error('Failed to delete question:', err);
+        alert('Failed to delete question. Please try again.');
+      }
+    }
+  };
+
+  return (
+    <div className="group bg-white dark:bg-dark-surface rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-5 border border-gray-200 dark:border-dark-border relative">
+      <Link to={`/q-a/${question.questionId}`} className="block">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex sm:flex-col items-center sm:justify-center gap-2 sm:gap-0 text-center p-2 rounded-lg bg-gray-50 dark:bg-dark-border w-full sm:w-20">
+            <span className="font-bold text-xl text-cuet-primary-900 dark:text-cuet-primary-300">
+              {question.answers ? question.answers.length : 0}
+            </span>
+            <span className="text-sm text-gray-600 dark:text-dark-text-secondary">answers</span>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white group-hover:text-cuet-primary-800 dark:group-hover:text-cuet-primary-400 transition-colors">
+              {question.title}
+            </h2>
+            <div className="flex items-center justify-end gap-2 text-xs text-gray-500 dark:text-dark-text-secondary mt-3 pt-3 border-t border-gray-100 dark:border-dark-border">
+              <span>asked by <strong>{question.askedBy?.name || 'Unknown'}</strong> on {format(parseISO(question.createdAt), 'MMM d, yyyy')}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
+      {canDelete && (
+        <button
+          onClick={handleDelete}
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          title="Delete question"
+        >
+          <Trash2 size={18} />
+        </button>
+      )}
     </div>
-  </Link>
-);
+  );
+};
 
 export default QAPage;

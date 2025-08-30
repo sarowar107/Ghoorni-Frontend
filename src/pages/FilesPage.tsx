@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { FileUp, Search, Filter, File, HardDrive, Download, Loader } from 'lucide-react';
+import { FileUp, Search, Filter, File, HardDrive, Download, Loader, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import UploadFileModal from '../components/modals/UploadFileModal';
 import fileService, { FileData, UploadMetadata } from '../services/fileService';
@@ -34,14 +34,34 @@ const FilesPage: React.FC = () => {
     fetchFiles();
   }, []);
 
-  const handleFileUpload = async (file: File, metadata: UploadMetadata) => {
+    const handleUpload = async (file: File, metadata: UploadMetadata): Promise<boolean> => {
     try {
-      const uploadedFile = await fileService.uploadFile(file, metadata);
-      setFiles(prevFiles => [uploadedFile, ...prevFiles]);
+      await fileService.uploadFile(file, metadata);
+      // Refresh the file list
+      const data = await fileService.getAllFiles();
+      setFiles(data);
+      setUploadModalOpen(false);
       return true;
     } catch (err) {
       console.error('Error uploading file:', err);
+      alert('Failed to upload file. Please try again.');
       return false;
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    if (!window.confirm('Are you sure you want to delete this file?')) {
+      return;
+    }
+
+    try {
+      await fileService.deleteFile(fileId);
+      // Refresh the file list
+      const data = await fileService.getAllFiles();
+      setFiles(data);
+    } catch (err) {
+      console.error('Error deleting file:', err);
+      alert('Failed to delete file. Please try again.');
     }
   };
 
@@ -153,13 +173,24 @@ const FilesPage: React.FC = () => {
                       {typeof file.fileSize === 'number' ? formatFileSize(file.fileSize) : 'Unknown size'}
                     </td>
                     <td className="p-4 text-right">
-                      <a 
-                        href={fileService.getDownloadLink(file.id)}
-                        download={file.fileName || `file-${file.id}`}
-                        className="flex items-center justify-center gap-2 px-3 py-1.5 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 font-medium rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors text-sm"
-                      >
-                        <Download size={16} />
-                      </a>
+                      <div className="flex items-center justify-end gap-2">
+                        <a 
+                          href={fileService.getDownloadLink(file.id)}
+                          download={file.fileName || `file-${file.id}`}
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 font-medium rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors text-sm"
+                        >
+                          <Download size={16} />
+                        </a>
+                        {(user?.role === 'admin' || user?.userId === file.uploadedBy?.userId) && (
+                          <button
+                            onClick={() => handleDeleteFile(file.id)}
+                            className="flex items-center justify-center gap-2 px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                            title="Delete file"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -179,7 +210,7 @@ const FilesPage: React.FC = () => {
       <UploadFileModal 
         isOpen={isUploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-        onFileUpload={handleFileUpload}
+        onFileUpload={handleUpload}
         user={user}
       />
     </>

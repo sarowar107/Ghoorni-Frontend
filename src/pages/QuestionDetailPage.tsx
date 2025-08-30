@@ -1,23 +1,26 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Send, UserCircle, Loader, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Send, UserCircle, Loader, AlertTriangle, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import questionService, { Question, Answer, AnswerCreateRequest } from '../services/questionService';
+import questionService, { Question, Answer } from '../services/questionService';
 import { useAuth } from '../contexts/AuthContext';
 
 interface AnswerCardProps {
   answer: Answer;
+  onDelete: (answerId: number) => void;
 }
 
 const QuestionDetailPage: React.FC = () => {
   const { questionId = '' } = useParams<{ questionId?: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newAnswer, setNewAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchQuestionDetails = useCallback(async () => {
     if (!questionId) return;
@@ -38,26 +41,57 @@ const QuestionDetailPage: React.FC = () => {
     fetchQuestionDetails();
   }, [fetchQuestionDetails]);
 
-  const handleAnswerSubmit = async (e: React.FormEvent) => {
+  const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAnswer.trim() || !questionId || !user) return;
+    if (!user || !questionId || !newAnswer.trim()) return;
 
-    setIsSubmitting(true);
     try {
-      const answerData: AnswerCreateRequest = {
-        content: newAnswer,
+      setIsSubmitting(true);
+      const answerData = {
         questionId: questionId,
+        content: newAnswer.trim()
       };
-      await questionService.addAnswer(answerData);
+      await questionService.submitAnswer(answerData);
       setNewAnswer('');
-      fetchQuestionDetails(); // Refresh answers
+      // Refresh question to get the new answer
+      await fetchQuestionDetails();
     } catch (err) {
       console.error('Error submitting answer:', err);
-      setError('Failed to submit your answer. Please try again.');
+      alert('Failed to submit answer. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleDeleteQuestion = async () => {
+    if (!question || !window.confirm('Are you sure you want to delete this question?')) return;
+
+    try {
+      setIsDeleting(true);
+      await questionService.deleteQuestion(parseInt(question.questionId));
+      navigate('/qa');
+    } catch (err) {
+      console.error('Error deleting question:', err);
+      alert('Failed to delete question. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAnswer = async (answerId: number) => {
+    if (!window.confirm('Are you sure you want to delete this answer?')) return;
+
+    try {
+      await questionService.deleteAnswer(answerId);
+      // Refresh question to update the answers list
+      await fetchQuestionDetails();
+    } catch (err) {
+      console.error('Error deleting answer:', err);
+      alert('Failed to delete answer. Please try again.');
+    }
+  };
+
+  const canDeleteQuestion = user?.role === 'admin' || user?.userId === question?.askedBy.userId;
 
   if (loading) {
     return (
@@ -130,7 +164,7 @@ const QuestionDetailPage: React.FC = () => {
         <div className="space-y-6">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{question.answers?.length || 0} Answer(s)</h2>
           {question.answers && question.answers.length > 0 ? (
-            question.answers.map(answer => <AnswerCard key={answer.ansId} answer={answer} />)
+            question.answers.map(answer => <AnswerCard key={answer.ansId} answer={answer} onDelete={handleDeleteAnswer} />)
           ) : (
             <p className="text-gray-600 dark:text-dark-text-secondary">There are no answers to this question yet.</p>
           )}
@@ -140,7 +174,7 @@ const QuestionDetailPage: React.FC = () => {
         {user ? (
           <div className="bg-white dark:bg-dark-surface rounded-xl shadow-sm p-6 border border-gray-200 dark:border-dark-border">
             <h3 className="text-xl font-bold text-gray-800 dark:text-white">Your Answer</h3>
-            <form onSubmit={handleAnswerSubmit} className="mt-4 space-y-4">
+            <form onSubmit={handleSubmitAnswer} className="mt-4 space-y-4">
               <textarea
                 rows={6}
                 value={newAnswer}
@@ -173,17 +207,33 @@ const QuestionDetailPage: React.FC = () => {
   );
 };
 
-const AnswerCard = ({ answer }: AnswerCardProps) => (
-  <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border">
-    <p className="text-gray-700 dark:text-dark-text whitespace-pre-wrap">{answer?.content || 'No content'}</p>
-    <div className="flex items-center justify-end gap-4 text-sm text-gray-500 dark:text-dark-text-secondary mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
-      <div className="flex items-center gap-2">
-        <UserCircle size={20} />
-        <span><strong>{answer?.answeredBy?.name || 'Unknown'}</strong></span>
+const AnswerCard = ({ answer, onDelete }: AnswerCardProps) => {
+  const { user } = useAuth();
+  const canDeleteAnswer = user?.role === 'admin' || user?.userId === answer.answeredBy.userId;
+
+  return (
+    <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border relative">
+      <p className="text-gray-700 dark:text-dark-text whitespace-pre-wrap">{answer?.content || 'No content'}</p>
+      <div className="flex items-center justify-between gap-4 text-sm text-gray-500 dark:text-dark-text-secondary mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <UserCircle size={20} />
+            <span><strong>{answer?.answeredBy?.name || 'Unknown'}</strong></span>
+          </div>
+          <span>answered on {answer?.createdAt ? format(parseISO(answer.createdAt), 'MMM d, yyyy') : 'Unknown date'}</span>
+        </div>
+        {canDeleteAnswer && (
+          <button
+            onClick={() => onDelete(parseInt(answer.ansId))}
+            className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            title="Delete answer"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
       </div>
-      <span>answered on {answer?.createdAt ? format(parseISO(answer.createdAt), 'MMM d, yyyy') : 'Unknown date'}</span>
     </div>
-  </div>
-);
+  );
+};
 
 export default QuestionDetailPage;
