@@ -27,11 +27,13 @@ const fileService = {
   },
 
   // Upload file (using FormData)
-  uploadFile: async (file: File) => {
+  uploadFile: async (file: File, topic: string = 'General', isPublic: boolean = true) => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('topic', topic);
+    formData.append('isPublic', String(isPublic));
     
-    const response = await api.post('/files', formData, {
+    const response = await api.post('/files/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

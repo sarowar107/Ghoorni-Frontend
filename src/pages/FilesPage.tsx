@@ -36,7 +36,7 @@ const FilesPage: React.FC = () => {
 
   const handleFileUpload = async (file: File) => {
     try {
-      const uploadedFile = await fileService.uploadFile(file);
+      const uploadedFile = await fileService.uploadFile(file, 'General', true);
       setFiles([uploadedFile, ...files]);
       return true;
     } catch (err) {
