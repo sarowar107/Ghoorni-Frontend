@@ -10,7 +10,7 @@ const MainLayout: React.FC = () => {
     <div className="relative flex h-screen bg-gray-50 dark:bg-dark-bg overflow-hidden">
       {/* Background Image & Gradient Overlay */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-fixed opacity-5" 
+        className="absolute inset-0 bg-cover bg-center bg-fixed opacity-10" 
         style={{ backgroundImage: "url('https://itbi-cuet.com/wp-content/uploads/2024/01/download-2.jpg')" }}
       ></div>
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent dark:from-black/30 dark:to-transparent"></div>
