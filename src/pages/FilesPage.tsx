@@ -3,13 +3,13 @@ import { Helmet } from 'react-helmet-async';
 import { FileUp, Search, Filter, File, HardDrive, Download, Loader } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import UploadFileModal from '../components/modals/UploadFileModal';
-import fileService, { FileData } from '../services/fileService';
+import fileService, { FileData, UploadMetadata } from '../services/fileService';
 import { useAuth } from '../contexts/AuthContext';
 
 
 
 const FilesPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [files, setFiles] = useState<FileData[]>([]);
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
@@ -34,10 +34,10 @@ const FilesPage: React.FC = () => {
     fetchFiles();
   }, []);
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, metadata: UploadMetadata) => {
     try {
-      const uploadedFile = await fileService.uploadFile(file, 'General', true);
-      setFiles([uploadedFile, ...files]);
+      const uploadedFile = await fileService.uploadFile(file, metadata);
+      setFiles(prevFiles => [uploadedFile, ...prevFiles]);
       return true;
     } catch (err) {
       console.error('Error uploading file:', err);
@@ -47,10 +47,13 @@ const FilesPage: React.FC = () => {
 
   const filteredFiles = useMemo(() => {
     return files.filter(file => 
-      file.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (file.uploadedBy?.name && file.uploadedBy.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      (file.fileName && file.fileName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (file.uploadedBy?.name && file.uploadedBy.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (file.topic && file.topic.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [searchTerm, files]);
+
+  const canUpload = isAuthenticated && user && ['admin', 'teacher', 'cr'].includes(user.role);
 
   return (
     <>
@@ -65,13 +68,15 @@ const FilesPage: React.FC = () => {
               Access course materials, notes, and other shared documents.
             </p>
           </div>
-          <button 
-            onClick={() => setUploadModalOpen(true)} // Open modal
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-cuet-primary-900 text-white font-semibold rounded-lg shadow-md hover:bg-cuet-primary-800 transition-colors duration-200"
-          >
-            <FileUp size={20} />
-            Upload File
-          </button>
+          {canUpload && (
+            <button 
+              onClick={() => setUploadModalOpen(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-cuet-primary-900 text-white font-semibold rounded-lg shadow-md hover:bg-cuet-primary-800 transition-colors duration-200"
+            >
+              <FileUp size={20} />
+              Upload File
+            </button>
+          )}
         </div>
 
         {/* Search and Filter */}
@@ -80,7 +85,7 @@ const FilesPage: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search files by name, uploader, or course..."
+              placeholder="Search files by name, topic, or uploader..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
@@ -132,22 +137,25 @@ const FilesPage: React.FC = () => {
                     <td className="p-4 font-medium text-gray-800 dark:text-dark-text">
                       <div className="flex items-center gap-3">
                         <FileIcon type={file.fileType} />
-                        <span>{file.fileName}</span>
+                        <div className="flex flex-col">
+                          <span>{file.fileName || 'Unknown file'}</span>
+                          {file.topic && <span className="text-xs text-gray-500 dark:text-dark-text-secondary">Topic:{file.topic}</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="p-4 text-gray-600 dark:text-dark-text-secondary hidden md:table-cell">
                       {file.uploadedBy?.name || 'Unknown'}
                     </td>
                     <td className="p-4 text-gray-600 dark:text-dark-text-secondary hidden lg:table-cell">
-                      {format(parseISO(file.uploadedAt), 'MMM d, yyyy')}
+                      {file.uploadedAt ? format(parseISO(file.uploadedAt), 'MMM d, yyyy') : 'Unknown date'}
                     </td>
                     <td className="p-4 text-gray-600 dark:text-dark-text-secondary">
-                      {formatFileSize(file.fileSize)}
+                      {typeof file.fileSize === 'number' ? formatFileSize(file.fileSize) : 'Unknown size'}
                     </td>
                     <td className="p-4 text-right">
                       <a 
                         href={fileService.getDownloadLink(file.id)}
-                        download={file.fileName}
+                        download={file.fileName || `file-${file.id}`}
                         className="flex items-center justify-center gap-2 px-3 py-1.5 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 font-medium rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors text-sm"
                       >
                         <Download size={16} />
@@ -172,6 +180,7 @@ const FilesPage: React.FC = () => {
         isOpen={isUploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onFileUpload={handleFileUpload}
+        user={user}
       />
     </>
   );
@@ -186,7 +195,7 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const FileIcon = ({ type }: { type: string }) => {
+const FileIcon = ({ type }: { type: string | undefined }) => {
   const colors: { [key: string]: string } = {
     pdf: 'text-red-500',
     docx: 'text-blue-500',
@@ -203,7 +212,10 @@ const FileIcon = ({ type }: { type: string }) => {
     txt: 'text-gray-500',
     default: 'text-gray-500',
   };
-  return <File size={24} className={colors[type.toLowerCase()] || colors.default} />;
+  
+  // Safely handle possible undefined type
+  const fileExtension = type ? (type.split('/').pop()?.toLowerCase() || 'default') : 'default';
+  return <File size={24} className={colors[fileExtension] || colors.default} />;
 };
 
 export default FilesPage;

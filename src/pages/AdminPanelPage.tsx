@@ -2,8 +2,18 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { UserCog, ShieldCheck, Trash2, Edit } from 'lucide-react';
 
+type UserRole = 'STUDENT' | 'CR' | 'TEACHER' | 'ADMIN';
+type UserStatus = 'Active' | 'Suspended' | 'Pending Verification';
+
+interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  status: UserStatus;
+}
+
 // Mock Data
-const mockUsers = [
+const mockUsers: User[] = [
   { id: '1804116', name: 'John Doe', role: 'STUDENT', status: 'Active' },
   { id: '1804117', name: 'Jane Smith', role: 'CR', status: 'Active' },
   { id: 'T-001', name: 'Dr. Alan Grant', role: 'TEACHER', status: 'Active' },
@@ -76,8 +86,12 @@ const AdminPanelPage: React.FC = () => {
   );
 };
 
-const RolePill = ({ role }) => {
-  const styles = {
+interface RolePillProps {
+  role: UserRole;
+}
+
+const RolePill: React.FC<RolePillProps> = ({ role }) => {
+  const styles: Record<UserRole, string> = {
     STUDENT: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
     CR: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
     TEACHER: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
@@ -86,8 +100,12 @@ const RolePill = ({ role }) => {
   return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[role]}`}>{role}</span>;
 };
 
-const StatusPill = ({ status }) => {
-  const styles = {
+interface StatusPillProps {
+  status: UserStatus;
+}
+
+const StatusPill: React.FC<StatusPillProps> = ({ status }) => {
+  const styles: Record<UserStatus, string> = {
     Active: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
     Suspended: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
     'Pending Verification': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',

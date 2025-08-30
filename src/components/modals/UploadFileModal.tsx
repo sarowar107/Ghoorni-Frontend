@@ -1,41 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, ChevronDown } from 'lucide-react';
+import { User } from '../../contexts/AuthContext';
+import { UploadMetadata } from '../../services/fileService';
 
 interface UploadFileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onFileUpload: (file: File) => Promise<boolean>;
+  onFileUpload: (file: File, metadata: UploadMetadata) => Promise<boolean>;
+  user: User | null;
 }
 
-const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFileUpload }) => {
+const BATCHES = ['2020', '2021', '2022', '2023', '2024', '2025']; // Example batches
+
+const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFileUpload, user }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [topic, setTopic] = useState('');
+  const [batch, setBatch] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+  useEffect(() => {
+    // Reset form state when modal opens or user changes
+    if (isOpen) {
+      setFile(null);
+      setTopic('');
+      setBatch('');
+      setIsPublic(true);
+      setErrorMsg(null);
+      setIsUploading(false);
     }
+  }, [isOpen, user]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+      setErrorMsg(null);
+    }
+  };
+
+  const validateForm = (): boolean => {
+    if (!file) {
+      setErrorMsg('Please select a file to upload.');
+      return false;
+    }
+    if (!topic.trim()) {
+      setErrorMsg('Please provide a topic or content description.');
+      return false;
+    }
+    if ((user?.role === 'admin' || user?.role === 'teacher') && !batch) {
+      setErrorMsg('Please select a batch.');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     
-    if (!file) {
-      setErrorMsg('Please select a file to upload.');
-      return;
+    if (!validateForm() || !file || !user) return;
+    
+    const metadata: UploadMetadata = { topic };
+
+    if (user.role === 'admin') {
+      metadata.batch = batch;
+      metadata.isPublic = isPublic;
+    } else if (user.role === 'teacher') {
+      metadata.batch = batch;
+      metadata.isPublic = false;
+    } else if (user.role === 'cr') {
+      metadata.batch = user.batch || '';
+      metadata.isPublic = false;
     }
     
     try {
       setIsUploading(true);
-      const success = await onFileUpload(file);
+      const success = await onFileUpload(file, metadata);
       
       if (success) {
         onClose();
-        // Reset form
-        setFile(null);
       } else {
         setErrorMsg('Failed to upload file. Please try again.');
       }
@@ -47,9 +93,82 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
     }
   };
 
+  const renderRoleSpecificFields = () => {
+    if (!user) return null;
+
+    return (
+      <>
+        <div>
+          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+            Topic / Content
+          </label>
+          <textarea
+            id="topic"
+            rows={3}
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm bg-transparent"
+            placeholder="e.g., Midterm Lecture Slides, Assignment 1"
+          />
+        </div>
+
+        {(user.role === 'admin' || user.role === 'teacher') && (
+          <div>
+            <label htmlFor="batch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+              Batch
+            </label>
+            <div className="relative mt-1">
+              <select
+                id="batch"
+                value={batch}
+                onChange={(e) => setBatch(e.target.value)}
+                className="appearance-none w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm bg-transparent"
+              >
+                <option value="" disabled>Select a batch</option>
+                {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+        )}
+
+        {user.role === 'cr' && user.batch && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+              Batch
+            </label>
+            <p className="mt-1 text-sm text-gray-900 dark:text-dark-text bg-gray-100 dark:bg-dark-border/50 px-3 py-2 rounded-md">{user.batch} (auto-selected)</p>
+          </div>
+        )}
+
+        {user.role === 'admin' && (
+          <div className="flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                id="isPublic"
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="focus:ring-cuet-primary-500 h-4 w-4 text-cuet-primary-800 border-gray-300 rounded"
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor="isPublic" className="font-medium text-gray-700 dark:text-dark-text-secondary">
+                Make file public
+              </label>
+              <p className="text-gray-500 dark:text-dark-text-secondary/80">
+                If unchecked, the file will only be visible to the selected batch.
+              </p>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Upload New File">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
             File
@@ -73,8 +192,11 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
             </div>
           </div>
         </div>
+        
+        {renderRoleSpecificFields()}
+
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-md text-red-600 dark:text-red-400 text-sm">
             {errorMsg}
           </div>
         )}
@@ -88,7 +210,7 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
           </button>
           <button
             type="submit"
-            disabled={isUploading}
+            disabled={isUploading || !file}
             className="px-4 py-2 text-sm font-medium text-white bg-cuet-primary-900 rounded-lg hover:bg-cuet-primary-800 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isUploading ? (
