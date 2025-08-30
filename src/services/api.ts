@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'https://ghoorni-backend-production.up.railway.app/api',
 });
 
 // Request Interceptor: Automatically add the JWT token to headers
