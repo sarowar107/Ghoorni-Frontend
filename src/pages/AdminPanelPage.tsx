@@ -21,6 +21,12 @@ const AdminPanelPage: React.FC = () => {
   const { data: users = [], isLoading, isError, error } = useQuery<User[], Error>({
     queryKey: ['users'],
     queryFn: userService.getAllUsers,
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchInterval: false,
+    enabled: !!user && user.role === 'admin', // Only fetch if user is admin
   });
 
   const deleteUserMutation = useMutation({
@@ -90,27 +96,35 @@ const AdminPanelPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
-                  {users.map(user => (
-                    <tr key={user.userId} className="hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
-                      <td className="p-4 font-mono text-sm text-gray-600 dark:text-dark-text-secondary">{user.userId}</td>
-                      <td className="p-4 font-medium text-gray-800 dark:text-dark-text">{user.name}</td>
-                      <td className="p-4 text-gray-600 dark:text-dark-text-secondary">{user.email}</td>
-                      <td className="p-4"><RolePill role={user.role} /></td>
-                      <td className="p-4 text-gray-600 dark:text-dark-text-secondary">{user.deptName}</td>
-                      <td className="p-4 text-gray-600 dark:text-dark-text-secondary">{user.batch}</td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleDeleteUser(user.userId)}
-                            className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
-                            title="Delete user"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                  {Array.isArray(users) && users.length > 0 ? (
+                    users.map(user => (
+                      <tr key={user.userId} className="hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors">
+                        <td className="p-4 font-mono text-sm text-gray-600 dark:text-dark-text-secondary">{user.userId}</td>
+                        <td className="p-4 font-medium text-gray-800 dark:text-dark-text">{user.name}</td>
+                        <td className="p-4 text-gray-600 dark:text-dark-text-secondary">{user.email}</td>
+                        <td className="p-4"><RolePill role={user.role} /></td>
+                        <td className="p-4 text-gray-600 dark:text-dark-text-secondary">{user.deptName}</td>
+                        <td className="p-4 text-gray-600 dark:text-dark-text-secondary">{user.batch}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleDeleteUser(user.userId)}
+                              className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-colors"
+                              title="Delete user"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-gray-500 dark:text-dark-text-secondary">
+                        No users found
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             )}

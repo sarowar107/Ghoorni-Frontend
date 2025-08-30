@@ -33,7 +33,6 @@ const authService = {
     localStorage.removeItem('auth_token');
     
     try {
-      console.log(`Logging in with user ID: ${credentials.userId}`);
       const response = await api.post('/auth/login', credentials);
       const token = response.data;
       
@@ -44,7 +43,6 @@ const authService = {
       // Save the token with userId to ensure we know who we're logged in as
       localStorage.setItem('auth_token', token);
       localStorage.setItem('auth_user_id', credentials.userId);
-      console.log(`Auth token saved for user ${credentials.userId}, token length: ${token.length}`);
       
       // Update authorization headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -54,10 +52,7 @@ const authService = {
       
       return token;
     } catch (error: any) {
-      console.error('Login API error:', error.message);
-      if (error.response) {
-        console.error('Server response:', error.response.status, error.response.data);
-      }
+      console.error('Login failed:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -72,23 +67,12 @@ const authService = {
   getCurrentUser: async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      console.log('Fetching current user with token:', token ? `${token.substring(0, 15)}...` : 'No token');
       
       if (!token) {
-        console.log('No token found, cannot fetch user');
         return null;
       }
       
-      // Force token refresh in request headers
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      const response = await api.get('/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
+      const response = await api.get('/auth/me');
       
       if (!response.data) {
         console.error('Empty response data from /auth/me');
@@ -96,22 +80,16 @@ const authService = {
       }
       
       const userData = response.data;
-      console.log('Retrieved user data:', JSON.stringify(userData));
-      console.log('User details - Name:', userData.name, 'Role:', userData.role, 'ID:', userData.userId);
-      
-
+      console.log('User authenticated:', userData.name, '(' + userData.role + ')');
       
       return userData;
     } catch (error: any) {
-      console.error('Failed to get current user:', error.message);
-      if (error.response) {
-        console.error('Error response:', error.response.status, error.response.data);
-      }
+      console.error('Failed to get current user:', error.response?.status || error.message);
       
       // Remove token if there's an authentication error
-      if (error.response && (error.response.status === 401 || error.response.status === 403 || error.response.status === 404)) {
-        console.log('Removing token due to auth error');
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user_id');
       }
       return null;
     }

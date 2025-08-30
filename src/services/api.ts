@@ -18,4 +18,22 @@ api.interceptors.request.use(
   }
 );
 
+// Response Interceptor: Handle authentication errors
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Handle 401 Unauthorized responses
+    if (error.response?.status === 401) {
+      // Clear invalid token
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user_id');
+      // Don't redirect here to avoid infinite loops
+      console.log('Authentication failed, token cleared');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

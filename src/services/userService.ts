@@ -12,15 +12,22 @@ export interface User {
 }
 
 const userService = {
-  // Get all users
+  // Get all users (admin only)
   getAllUsers: async (): Promise<User[]> => {
-    const response = await api.get('/users');
-    return response.data;
+    const response = await api.get('/admin/users');
+    
+    // Handle different response types from backend
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      // If response is not an array (likely an error message), throw an error
+      throw new Error(typeof response.data === 'string' ? response.data : 'Failed to fetch users');
+    }
   },
 
-  // Delete user
+  // Delete user (admin only)
   deleteUser: async (userId: string): Promise<void> => {
-    await api.delete(`/users/${userId}`);
+    await api.delete(`/admin/users/${userId}`);
   },
 
   // Update user role

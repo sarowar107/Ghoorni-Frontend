@@ -27,8 +27,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     <>
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-border">
         <div className="flex items-center gap-3">
-          <img src="/ghoorni-logo.svg" alt="ghoorni Logo" className="h-10 w-10" />
-          <span className="text-xl font-bold font-serif text-cuet-primary-900 dark:text-white">ghoorni</span>
+          <img src="/ghoorni-logo.png" alt="Ghoorni Logo" className="h-10 w-10" />
+          <span className="text-xl font-bold font-serif text-cuet-primary-900 dark:text-white">Ghoorni</span>
         </div>
         <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">
           <X size={24} />

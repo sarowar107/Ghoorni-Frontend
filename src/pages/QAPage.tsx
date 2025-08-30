@@ -1,42 +1,28 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { MessageSquarePlus, Search, MessageSquare, Loader, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import questionService, { Question } from '../services/questionService';
 import AskQuestionModal from '../components/qa/AskQuestionModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const QAPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const fetchQuestions = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await questionService.getAllQuestions();
-      setQuestions(data);
-    } catch (err) {
-      console.error('Error fetching questions:', err);
-      setError('Failed to load questions. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);
+  // Use React Query to fetch questions
+  const { data: questions = [], isLoading, isError, error, refetch } = useQuery<Question[], Error>({
+    queryKey: ['questions'],
+    queryFn: questionService.getAllQuestions
+  });
 
   const handleQuestionAsked = () => {
     setIsModalOpen(false);
-    fetchQuestions();
+    queryClient.invalidateQueries({ queryKey: ['questions'] });
   };
 
   const filteredAndSortedQuestions = useMemo(() => {
@@ -87,19 +73,19 @@ const QAPage: React.FC = () => {
 
         {/* Questions List */}
         <div className="space-y-4">
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-12 bg-white dark:bg-dark-surface rounded-lg">
               <Loader size={48} className="mx-auto text-gray-400 animate-spin" />
               <h3 className="mt-4 text-xl font-semibold text-gray-800 dark:text-white">Loading Questions</h3>
               <p className="mt-1 text-gray-500 dark:text-dark-text-secondary">Please wait...</p>
             </div>
-          ) : error ? (
+          ) : isError ? (
             <div className="text-center py-12 bg-white dark:bg-dark-surface rounded-lg">
               <div className="text-red-500 text-center">
                 <h3 className="text-xl font-semibold">Error</h3>
-                <p className="mt-2">{error}</p>
+                <p className="mt-2">{error?.message || 'An error occurred while loading questions'}</p>
                 <button
-                  onClick={fetchQuestions}
+                  onClick={() => refetch()}
                   className="mt-4 px-4 py-2 bg-cuet-primary-900 text-white rounded-lg hover:bg-cuet-primary-800"
                 >
                   Try Again
