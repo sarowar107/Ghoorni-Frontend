@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   const sidebarContent = (
     <>
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-border">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200/80 dark:border-dark-border/80">
         <div className="flex items-center gap-3">
           <img src="/ghoorni-logo.png" alt="Ghoorni Logo" className="h-10 w-10" />
           <span className="text-xl font-bold font-serif text-cuet-primary-900 dark:text-white">Ghoorni</span>
@@ -40,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         ))}
         {user?.role === 'admin' && <NavItem item={adminNav} currentPath={location.pathname} />}
       </nav>
-      <div className="px-4 py-6 border-t border-gray-200 dark:border-dark-border">
+      <div className="px-4 py-6 border-t border-gray-200/80 dark:border-dark-border/80">
         <NavItem item={profileNav} currentPath={location.pathname} />
       </div>
     </>
@@ -65,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed top-0 left-0 h-full w-72 bg-white dark:bg-dark-surface z-40 flex flex-col"
+              className="fixed top-0 left-0 h-full w-72 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-lg z-40 flex flex-col"
             >
               {sidebarContent}
             </motion.div>
@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:flex-col lg:w-72 border-r border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
+      <div className="hidden lg:flex lg:flex-col lg:w-72 border-r border-gray-200/80 dark:border-dark-border/80 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-lg">
         {sidebarContent}
       </div>
     </>

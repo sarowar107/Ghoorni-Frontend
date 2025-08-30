@@ -22,11 +22,11 @@ const AuthLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg p-4 transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg p-4 transition-colors duration-300 overflow-y-auto">
       <div className="absolute inset-0 z-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-10 dark:opacity-5" 
-          style={{ backgroundImage: "url('https://images.pexels.com/photos/267507/pexels-photo-267507.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
+          className="absolute inset-0 bg-cover bg-center opacity-10 dark:opacity-5 bg-fixed" 
+          style={{ backgroundImage: "url('https://itbi-cuet.com/wp-content/uploads/2024/01/download-2.jpg')" }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-br from-cuet-primary-900/10 to-cuet-secondary-700/10 dark:from-cuet-primary-950/20 dark:to-black/20"></div>
       </div>
