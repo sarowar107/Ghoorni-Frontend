@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
       </Helmet>
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-xl dark:bg-dark-surface animate-fade-in">
         <div className="text-center">
-          <img src="/ghoorni-logo.svg" alt="ghoorni Logo" className="w-20 h-20 mx-auto" />
+          <img src="/ghoorni-logo.png" alt="ghoorni Logo" className="w-20 h-20 mx-auto" />
           <h2 className="mt-4 text-3xl font-bold font-serif text-gray-900 dark:text-white">
             Sign in to ghoorni
           </h2>
