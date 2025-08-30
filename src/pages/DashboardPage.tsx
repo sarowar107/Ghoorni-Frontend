@@ -15,10 +15,15 @@ import {
   addMonths, 
   subMonths, 
   parseISO, 
-  isSameDay 
+  isSameDay,
+  addDays,
+  isAfter,
+  isBefore 
 } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import noticeService, { Notice } from '../services/noticeService';
+import fileService from '../services/fileService';
+import questionService from '../services/questionService';
 import clsx from 'clsx';
 
 // Calendar Component
@@ -152,13 +157,36 @@ const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const canCreate = user?.role === 'admin' || user?.role === 'teacher' || user?.role === 'cr';
 
+  // Fetch all required data
   const { data: notices = [] } = useQuery<Notice[], Error>({
     queryKey: ['notices'],
     queryFn: noticeService.getAllNotices,
   });
 
+  const { data: files = [] } = useQuery({
+    queryKey: ['files'],
+    queryFn: fileService.getAllFiles,
+  });
+
+  const { data: questions = [] } = useQuery({
+    queryKey: ['questions'],
+    queryFn: questionService.getAllQuestions,
+  });
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
+  // Calculate notices expiring in the next week
+  const eventsNextWeek = useMemo(() => {
+    const today = new Date();
+    const nextWeek = addDays(today, 7);
+    
+    return notices.filter(notice => {
+      if (!notice.expiryTime) return false;
+      const expiryDate = parseISO(notice.expiryTime);
+      return isAfter(expiryDate, today) && isBefore(expiryDate, nextWeek);
+    }).length;
+  }, [notices]);
 
   const noticesForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
@@ -184,9 +212,24 @@ const DashboardPage: React.FC = () => {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard title="Events Next Week" value="5" icon={Bell} color="blue" />
-          <StatCard title="Total Files" value="12" icon={FileUp} color="green" />
-          <StatCard title="Open Questions" value="3" icon={MessageSquarePlus} color="yellow" />
+          <StatCard 
+            title="Events Next Week" 
+            value={eventsNextWeek.toString()} 
+            icon={Bell} 
+            color="blue" 
+          />
+          <StatCard 
+            title="Total Files" 
+            value={files.length.toString()} 
+            icon={FileUp} 
+            color="green" 
+          />
+          <StatCard 
+            title="Open Questions" 
+            value={questions.length.toString()} 
+            icon={MessageSquarePlus} 
+            color="yellow" 
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
