@@ -15,6 +15,17 @@ export interface SignupData {
   role: string;
 }
 
+
+
+export interface UpdateNameRequest {
+  name: string;
+}
+
+export interface UpdatePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 const authService = {
   // User login
   login: async (credentials: LoginCredentials) => {
@@ -88,6 +99,8 @@ const authService = {
       console.log('Retrieved user data:', JSON.stringify(userData));
       console.log('User details - Name:', userData.name, 'Role:', userData.role, 'ID:', userData.userId);
       
+
+      
       return userData;
     } catch (error: any) {
       console.error('Failed to get current user:', error.message);
@@ -116,6 +129,46 @@ const authService = {
   // Check if user is logged in
   isLoggedIn: () => {
     return !!localStorage.getItem('auth_token');
+  },
+
+
+
+  // Update user name
+  updateName: async (name: string) => {
+    try {
+      const response = await api.put('/user/name', { name });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to update name:', error.message);
+      throw error;
+    }
+  },
+
+  // Update password
+  updatePassword: async (currentPassword: string, newPassword: string) => {
+    try {
+      const response = await api.put('/user/password', {
+        currentPassword,
+        newPassword
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to update password:', error.message);
+      throw error;
+    }
+  },
+
+
+
+  // Delete account
+  deleteAccount: async () => {
+    try {
+      const response = await api.delete('/user/account');
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to delete account:', error.message);
+      throw error;
+    }
   },
 };
 

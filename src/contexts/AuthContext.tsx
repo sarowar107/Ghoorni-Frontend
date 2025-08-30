@@ -19,6 +19,10 @@ interface AuthContextType {
   signup: (userData: Omit<User, 'id'> & { password: string }) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  updateName: (name: string) => Promise<void>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  deleteAccount: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,8 +149,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAuthenticated = !!user;
 
+  // Add new profile functions
+  const refreshUserData = async () => {
+    if (!isAuthenticated) return;
+    
+    setLoading(true);
+    try {
+      const userData = await authService.getCurrentUser();
+      if (userData) {
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const updateName = async (name: string) => {
+    if (!user) throw new Error('Not authenticated');
+    
+    setLoading(true);
+    try {
+      await authService.updateName(name);
+      setUser((prev) => prev ? { ...prev, name } : null);
+    } catch (error) {
+      console.error('Error updating name:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user) throw new Error('Not authenticated');
+    
+    setLoading(true);
+    try {
+      await authService.updatePassword(currentPassword, newPassword);
+      return true;
+    } catch (error) {
+      console.error('Error updating password:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
+  
+  const deleteAccount = async () => {
+    if (!user) throw new Error('Not authenticated');
+    
+    setLoading(true);
+    try {
+      await authService.deleteAccount();
+      logout();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, signup, logout, loading }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      loading,
+      updateName,
+      updatePassword,
+      deleteAccount,
+      refreshUserData
+    }}>
       {children}
     </AuthContext.Provider>
   );

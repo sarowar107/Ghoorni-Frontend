@@ -38,11 +38,9 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         <HeadlessMenu as="div" className="relative">
           <div>
             <HeadlessMenu.Button className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border p-2 rounded-lg">
-              <img
-                src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
-                alt="User Avatar"
-                className="w-8 h-8 rounded-full"
-              />
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <User size={16} className="text-white" />
+              </div>
               <div className="hidden md:flex flex-col items-start">
                 <span className="font-semibold">{user?.name}</span>
                 <span className="text-xs text-gray-500 dark:text-dark-text-secondary">{user?.role}</span>
