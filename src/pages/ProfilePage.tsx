@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { User, Lock, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +21,7 @@ const Alert: React.FC<AlertProps> = ({ type, message }) => {
 
 const ProfilePage: React.FC = () => {
   const { user, updateName, updatePassword, deleteAccount, loading } = useAuth();
+  const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
   
   // Form states
@@ -44,16 +46,22 @@ const ProfilePage: React.FC = () => {
     setNameAlert(null);
     
     if (!nameValue.trim()) {
-      setNameAlert({ type: 'error', message: 'Name cannot be empty' });
+      const errorMsg = 'Name cannot be empty';
+      setNameAlert({ type: 'error', message: errorMsg });
+      showError('Invalid Name', errorMsg);
       return;
     }
     
     try {
       await updateName(nameValue);
-      setNameAlert({ type: 'success', message: 'Name updated successfully' });
+      const successMsg = 'Name updated successfully';
+      setNameAlert({ type: 'success', message: successMsg });
+      showSuccess('Name Updated', successMsg);
       setTimeout(() => setNameAlert(null), 3000);
     } catch (error) {
-      setNameAlert({ type: 'error', message: 'Failed to update name. Please try again.' });
+      const errorMsg = 'Failed to update name. Please try again.';
+      setNameAlert({ type: 'error', message: errorMsg });
+      showError('Update Failed', errorMsg);
     }
   };
   
@@ -62,27 +70,37 @@ const ProfilePage: React.FC = () => {
     setPasswordAlert(null);
     
     if (!currentPassword || !newPassword) {
-      setPasswordAlert({ type: 'error', message: 'Please fill in both password fields' });
+      const errorMsg = 'Please fill in both password fields';
+      setPasswordAlert({ type: 'error', message: errorMsg });
+      showError('Missing Information', errorMsg);
       return;
     }
     
     if (newPassword.length < 6) {
-      setPasswordAlert({ type: 'error', message: 'New password must be at least 6 characters long' });
+      const errorMsg = 'New password must be at least 6 characters long';
+      setPasswordAlert({ type: 'error', message: errorMsg });
+      showError('Invalid Password', errorMsg);
       return;
     }
     
     try {
       const success = await updatePassword(currentPassword, newPassword);
       if (success) {
-        setPasswordAlert({ type: 'success', message: 'Password updated successfully' });
+        const successMsg = 'Password updated successfully';
+        setPasswordAlert({ type: 'success', message: successMsg });
+        showSuccess('Password Changed', successMsg);
         setCurrentPassword('');
         setNewPassword('');
         setTimeout(() => setPasswordAlert(null), 3000);
       } else {
-        setPasswordAlert({ type: 'error', message: 'Current password is incorrect' });
+        const errorMsg = 'Current password is incorrect';
+        setPasswordAlert({ type: 'error', message: errorMsg });
+        showError('Password Change Failed', errorMsg);
       }
     } catch (error) {
-      setPasswordAlert({ type: 'error', message: 'Failed to update password. Please try again.' });
+      const errorMsg = 'Failed to update password. Please try again.';
+      setPasswordAlert({ type: 'error', message: errorMsg });
+      showError('Password Change Failed', errorMsg);
     }
   };
   

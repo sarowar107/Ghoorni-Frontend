@@ -1,14 +1,26 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LogIn } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Show success message if coming from signup
+  React.useEffect(() => {
+    if (location.state?.message) {
+      showSuccess('Account Created', location.state.message);
+      // Clear the message from location state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, showSuccess, navigate, location.pathname]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -21,11 +33,25 @@ const LoginPage: React.FC = () => {
       const password = formData.get('password')?.toString() || '';
 
       await login(userId, password);
+      showSuccess('Login Successful', 'Welcome back!');
       navigate('/');
-    } catch (err: any)
-    {
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data || 'Invalid credentials. Please try again.');
+      
+      // Get error message from response
+      const errorMessage = err.response?.data || 'Invalid credentials. Please try again.';
+      
+      // Set local error for immediate display
+      setError(errorMessage);
+      
+      // Show toast notification based on error type
+      if (errorMessage.toLowerCase().includes('user not found')) {
+        showError('User Not Found', 'The user ID you entered does not exist. Please check your ID and try again.');
+      } else if (errorMessage.toLowerCase().includes('invalid credentials')) {
+        showError('Invalid Credentials', 'The user ID and password combination is incorrect. Please try again.');
+      } else {
+        showError('Login Failed', errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

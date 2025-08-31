@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
@@ -22,8 +23,9 @@ function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <Router>
+        <ToastProvider>
+          <AuthProvider>
+            <Router>
             <Routes>
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
@@ -55,8 +57,9 @@ function App() {
                 />
               </Route>
             </Routes>
-          </Router>
-        </AuthProvider>
+            </Router>
+          </AuthProvider>
+        </ToastProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

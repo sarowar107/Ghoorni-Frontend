@@ -5,6 +5,7 @@ import { Eye, EyeOff, UserPlus, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 
 type Role = 'Student' | 'CR' | 'Teacher';
 
@@ -19,6 +20,7 @@ const SignupPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { signup } = useAuth();
+  const { showSuccess, showError } = useToast();
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,11 +65,30 @@ const SignupPage: React.FC = () => {
       // Submit the form data using the auth context
       await signup(userData);
       
+      // Show success toast
+      showSuccess('Account Created Successfully!', 'Your account has been created. You can now log in.');
+      
       // Redirect to login page on successful registration
-      navigate('/login', { state: { message: 'Account created successfully! Please log in.' } });
+      navigate('/login');
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.response?.data || 'Failed to register. Please try again.');
+      
+      // Get error message from response
+      const errorMessage = err.response?.data || 'Failed to register. Please try again.';
+      
+      // Set local error for immediate display
+      setError(errorMessage);
+      
+      // Show toast notification based on error type
+      if (errorMessage.toLowerCase().includes('user id already exists') || 
+          errorMessage.toLowerCase().includes('already exists')) {
+        showError('User Already Exists', 'An account with this User ID already exists. Please use a different ID or try logging in.');
+      } else if (errorMessage.toLowerCase().includes('email already exists') || 
+                 errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('exists')) {
+        showError('Email Already Registered', 'This email address is already registered. Please use a different email or try logging in.');
+      } else {
+        showError('Registration Failed', errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
