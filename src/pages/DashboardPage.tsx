@@ -281,8 +281,11 @@ const DashboardPage: React.FC = () => {
               {canCreate && (
                 <ActionButton to="/notices/create" icon={PlusCircle} text="Create New Notice" />
               )}
-              <ActionButton to="/notices" icon={PlusCircle} text="Add a Notice" />
-              <ActionButton to="/files" icon={FileUp} text="Upload a File" />
+              {canCreate && (
+                <ActionButton to="/files" icon={FileUp} text="Upload a File" />
+              )}
+              {/* <ActionButton to="/notices" icon={PlusCircle} text="Add a Notice" /> */}
+
               <ActionButton to="/q-a" icon={MessageSquarePlus} text="Ask a Question" />
             </div>
           </div>
