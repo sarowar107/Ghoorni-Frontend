@@ -132,7 +132,7 @@ const SignupPage: React.FC = () => {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <InputField 
-            label="User ID" 
+            label={selectedRole === 'Teacher' ? "Teacher ID" : "Student ID"}
             id="userId" 
             type="text" 
             placeholder={selectedRole === 'Teacher' ? "Enter your Teacher ID" : "Enter your Student ID"} 
