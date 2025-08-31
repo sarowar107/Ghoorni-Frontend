@@ -32,7 +32,7 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
     const noticeData: NoticeCreateRequest = {
       title: title.trim(),
       content: content.trim(),
-      expiryTime: expiryTime ? new Date(expiryTime).toISOString() : undefined,
+      expiryTime: expiryTime ? new Date(expiryTime).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }) : undefined,
       isPublic: user?.role === 'admin' ? isPublic : undefined,
       department: department || undefined,
       batch: batch || undefined,
