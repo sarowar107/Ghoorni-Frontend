@@ -1,5 +1,10 @@
 import api from './api';
 
+export interface LoginResponse {
+  token: string | null;
+  needsEmailVerification: boolean;
+}
+
 export interface LoginCredentials {
   userId: string;
   password: string;
@@ -28,13 +33,24 @@ export interface UpdatePasswordRequest {
 
 const authService = {
   // User login
-  login: async (credentials: LoginCredentials) => {
+  login: async ({ userId, password }: LoginCredentials) => {
     // Clear any existing token first
     localStorage.removeItem('auth_token');
     
     try {
-      const response = await api.post('/auth/login', credentials);
-      const token = response.data;
+      const response = await api.post('/auth/login', { userId, password });
+      
+      if (response.data.needsEmailVerification) {
+        throw { 
+          response: { 
+            data: 'Please verify your email to continue',
+            needsEmailVerification: true,
+            userId: userId
+          } 
+        };
+      }
+      
+      const token = response.data.token;
       
       if (!token) {
         throw new Error('No token received from server');
@@ -42,15 +58,14 @@ const authService = {
       
       // Save the token with userId to ensure we know who we're logged in as
       localStorage.setItem('auth_token', token);
-      localStorage.setItem('auth_user_id', credentials.userId);
+      localStorage.setItem('auth_user_id', userId);
       
       // Update authorization headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // Validate the token immediately after login
-      await api.get('/auth/validate');
-      
-      return token;
+      // Get user details including email verification status
+      const userResponse = await api.get('/auth/me');
+      return userResponse.data;
     } catch (error: any) {
       console.error('Login failed:', error.response?.data || error.message);
       throw error;
@@ -148,6 +163,14 @@ const authService = {
       throw error;
     }
   },
+
+  // Resend verification email
+  resendVerification: async (userId: string) => {
+    const response = await api.post('/auth/resend-verification', null, {
+      params: { userId }
+    });
+    return response.data;
+  }
 };
 
 export default authService;

@@ -41,12 +41,16 @@ const SignupPage: React.FC = () => {
       }
 
       // Validate email domain
-      if (!email.endsWith('@cuet.ac.bd')) {
-        setError('Only @cuet.ac.bd email addresses are allowed');
+      if ((selectedRole === 'Teacher' && !email.endsWith('@cuet.ac.bd'))) {
+        setError('Only CUET email addresses are allowed');
+        setIsLoading(false);
+        return;
+      } else if (selectedRole === 'Student' && !email.endsWith('@student.cuet.ac.bd')) {
+        setError('Only CUET email addresses are allowed');
         setIsLoading(false);
         return;
       }
-      
+
       const userData = {
         userId: userId,
         name: formData.get('fullName')?.toString() || '',
@@ -73,10 +77,10 @@ const SignupPage: React.FC = () => {
       await signup(userData);
       
       // Show success toast
-      showSuccess('Account Created Successfully!', 'Your account has been created. You can now log in.');
+      showSuccess('Account Created Successfully!', 'Please check your email to verify your account.');
       
-      // Redirect to login page on successful registration
-      navigate('/login');
+      // Redirect to verify email page
+      navigate('/verify-email', { state: { userId: userData.userId } });
     } catch (err: any) {
       console.error('Registration error:', err);
       

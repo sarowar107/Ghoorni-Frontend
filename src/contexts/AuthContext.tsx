@@ -15,7 +15,7 @@ export interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (userId: string, password: string) => Promise<void>;
+  login: (userId: string, password: string) => Promise<User>;
   signup: (userData: Omit<User, 'id'> & { password: string }) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -82,19 +82,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       localStorage.removeItem('auth_token');
       
-      // Attempt login to get token
-      const token = await authService.login({ userId, password });
+      // Attempt login to get token and user data
+      const userData = await authService.login({ userId, password });
       
-      // Make sure token was saved in local storage
-      if (!localStorage.getItem('auth_token')) {
-        throw new Error('Authentication failed: Token not saved');
-      }
-      
-      // Get user data with new token
-      const userData = await authService.getCurrentUser();
-      
+      // At this point, if we get userData back, it means the login was successful
+      // and email was verified (the service throws for unverified email)
       if (!userData) {
         throw new Error('Failed to retrieve user data');
+      }
+      
+      // Double check the token was saved
+      if (!localStorage.getItem('auth_token')) {
+        throw new Error('Authentication failed: Token not saved');
       }
       
       if (userData.userId !== userId) {
@@ -104,6 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       setUser(userData);
+      return userData;
     } catch (error) {
       console.error('Login error:', error);
       localStorage.removeItem('auth_token'); // Clear token on any error

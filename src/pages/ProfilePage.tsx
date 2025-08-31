@@ -108,9 +108,11 @@ const ProfilePage: React.FC = () => {
     if (deleteConfirm) {
       try {
         await deleteAccount();
+        showSuccess('Account Deleted', 'Your account has been successfully deleted.');
         navigate('/login');
-      } catch (error) {
-        alert('Failed to delete account. Please try again.');
+      } catch (error: any) {
+        const errorMessage = error.response?.data || 'Failed to delete account. Please try again.';
+        showError('Account Deletion Failed', errorMessage);
       }
     } else {
       setDeleteConfirm(true);

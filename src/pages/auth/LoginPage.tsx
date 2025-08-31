@@ -38,6 +38,13 @@ const LoginPage: React.FC = () => {
     } catch (err: any) {
       console.error('Login error:', err);
       
+      // Handle email verification error
+      if (err.response?.needsEmailVerification) {
+        showError('Email Not Verified', 'Please verify your email to continue');
+        navigate('/verify-email', { state: { userId: err.response.userId } });
+        return;
+      }
+
       // Get error message from response
       const errorMessage = err.response?.data || 'Invalid credentials. Please try again.';
       
