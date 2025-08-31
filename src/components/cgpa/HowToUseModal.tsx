@@ -8,7 +8,7 @@ interface HowToUseModalProps {
 }
 
 // Convert Google Drive link to embeddable format
-const videoId = "1ExT7xqVSRkttdhu_KJFcskaVz3PGf3Q_";
+const videoId = "1MdbSD_kPQMyxbBIApMLtzhPVyDDv1qlj";
 const embedLink = `https://drive.google.com/file/d/${videoId}/preview`;
 const universityPortalLink = "https://course.cuet.ac.bd/result_published.php";
 
