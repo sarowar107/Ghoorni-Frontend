@@ -42,11 +42,11 @@ const SignupPage: React.FC = () => {
 
       // Validate email domain
       if ((selectedRole === 'Teacher' && !email.endsWith('@cuet.ac.bd'))) {
-        setError('Please use your CUET Teacher email address');
+        setError('Only CUET email addresses are allowed');
         setIsLoading(false);
         return;
       } else if (selectedRole === 'Student' && !email.endsWith('@student.cuet.ac.bd')) {
-        setError('Please use your CUET Student email address');
+        setError('Only CUET email addresses are allowed');
         setIsLoading(false);
         return;
       }
@@ -77,10 +77,10 @@ const SignupPage: React.FC = () => {
       await signup(userData);
       
       // Show success toast
-      showSuccess('Account Created Successfully!', 'Please check your email to verify your account.');
+      showSuccess('Account Created Successfully!', 'You can now login to your account.');
       
-      // Redirect to verify email page
-      navigate('/verify-email', { state: { userId: userData.userId } });
+      // Redirect to login page
+      navigate('/login');
     } catch (err: any) {
       console.error('Registration error:', err);
       
@@ -149,8 +149,8 @@ const SignupPage: React.FC = () => {
             placeholder={selectedRole === 'Teacher' ? "Enter your Teacher ID" : "Enter your Student ID"} 
           />
           <InputField label="Full Name" id="fullName" type="text" placeholder="Enter your full name" />
-          <InputField label="Email Address" id="email" type="email" placeholder="Enter your email address" />
-
+          <InputField label="Email Address" id="email" type="email" placeholder="your.email@cuet.ac.bd" />
+          
           <div className="relative">
             <InputField label="Password" id="password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" />
             <button
