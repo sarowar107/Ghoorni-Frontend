@@ -7,7 +7,8 @@ import { ToastProvider } from './contexts/ToastContext';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import CRVerificationPage from './pages/auth/CRVerificationPage';
-import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+// Email verification import disabled
+// import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import MainLayout from './layouts/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import NoticesPage from './pages/NoticesPage';
@@ -32,7 +33,8 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/signup/cr-verification" element={<CRVerificationPage />} />
-                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                {/* Email verification route disabled */}
+                {/* <Route path="/verify-email" element={<VerifyEmailPage />} /> */}
               </Route>
               <Route 
                 path="/" 

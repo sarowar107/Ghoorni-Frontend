@@ -77,10 +77,10 @@ const SignupPage: React.FC = () => {
       await signup(userData);
       
       // Show success toast
-      showSuccess('Account Created Successfully!', 'Please check your email to verify your account.');
+      showSuccess('Account Created Successfully!', 'You can now login to your account.');
       
-      // Redirect to verify email page
-      navigate('/verify-email', { state: { userId: userData.userId } });
+      // Redirect to login page
+      navigate('/login');
     } catch (err: any) {
       console.error('Registration error:', err);
       

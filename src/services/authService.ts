@@ -40,7 +40,8 @@ const authService = {
     try {
       const response = await api.post('/auth/login', { userId, password });
       
-      if (response.data.needsEmailVerification) {
+      // Email verification check disabled
+      /* if (response.data.needsEmailVerification) {
         throw { 
           response: { 
             data: 'Please verify your email to continue',
@@ -48,7 +49,7 @@ const authService = {
             userId: userId
           } 
         };
-      }
+      } */
       
       const token = response.data.token;
       
