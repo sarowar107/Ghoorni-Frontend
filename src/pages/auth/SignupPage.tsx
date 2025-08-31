@@ -39,6 +39,13 @@ const SignupPage: React.FC = () => {
         setIsLoading(false);
         return;
       }
+
+      // Validate email domain
+      if (!email.endsWith('@cuet.ac.bd')) {
+        setError('Only @cuet.ac.bd email addresses are allowed');
+        setIsLoading(false);
+        return;
+      }
       
       const userData = {
         userId: userId,
