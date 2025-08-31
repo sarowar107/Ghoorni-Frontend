@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, FileText, FolderKanban, MessageSquare, Shield, User, X } from 'lucide-react';
+import { LayoutDashboard, FileText, FolderKanban, MessageSquare, Shield, User, X, Calculator } from 'lucide-react'; // Import Calculator icon
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -14,6 +14,7 @@ const navItems = [
   { name: 'Notices', path: '/notices', icon: FileText },
   { name: 'Files', path: '/files', icon: FolderKanban },
   { name: 'Q & A', path: '/q-a', icon: MessageSquare },
+  { name: 'CGPA Calculator', path: '/cgpa-calculator', icon: Calculator }, // Add new nav item
 ];
 
 const adminNav = { name: 'Admin Panel', path: '/admin', icon: Shield };
