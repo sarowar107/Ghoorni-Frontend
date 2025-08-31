@@ -42,11 +42,11 @@ const SignupPage: React.FC = () => {
 
       // Validate email domain
       if ((selectedRole === 'Teacher' && !email.endsWith('@cuet.ac.bd'))) {
-        setError('Only CUET email addresses are allowed');
+        setError('Please use your CUET Teacher email address');
         setIsLoading(false);
         return;
       } else if (selectedRole === 'Student' && !email.endsWith('@student.cuet.ac.bd')) {
-        setError('Only CUET email addresses are allowed');
+        setError('Please use your CUET Student email address');
         setIsLoading(false);
         return;
       }
@@ -149,8 +149,8 @@ const SignupPage: React.FC = () => {
             placeholder={selectedRole === 'Teacher' ? "Enter your Teacher ID" : "Enter your Student ID"} 
           />
           <InputField label="Full Name" id="fullName" type="text" placeholder="Enter your full name" />
-          <InputField label="Email Address" id="email" type="email" placeholder="your.email@cuet.ac.bd" />
-          
+          <InputField label="Email Address" id="email" type="email" placeholder="Enter your email address" />
+
           <div className="relative">
             <InputField label="Password" id="password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" />
             <button
