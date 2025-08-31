@@ -1,0 +1,12 @@
+/* /index.html 200
+/login /index.html 200
+/signup /index.html 200
+/cr-verification /index.html 200
+/dashboard /index.html 200
+/profile /index.html 200
+/admin /index.html 200
+/notices /index.html 200
+/notice/* /index.html 200
+/files /index.html 200
+/qa /index.html 200
+/question/* /index.html 200
