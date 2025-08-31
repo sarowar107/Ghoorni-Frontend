@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { FileUp, Search, Filter, File, HardDrive, Download, Loader, Trash2 } from 'lucide-react';
+import { FileUp, Search, Filter, File, HardDrive, Download, Loader, Trash2, Eye } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import UploadFileModal from '../components/modals/UploadFileModal';
+import FilePreviewModal from '../components/modals/FilePreviewModal';
 import fileService, { FileData, UploadMetadata } from '../services/fileService';
 import { useAuth } from '../contexts/AuthContext';
-
-
 
 const FilesPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -15,6 +14,7 @@ const FilesPage: React.FC = () => {
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFileForPreview, setSelectedFileForPreview] = useState<FileData | null>(null);
   
   useEffect(() => {
     const fetchFiles = async () => {
@@ -34,10 +34,9 @@ const FilesPage: React.FC = () => {
     fetchFiles();
   }, []);
 
-    const handleUpload = async (file: File, metadata: UploadMetadata): Promise<boolean> => {
+  const handleUpload = async (file: File, metadata: UploadMetadata): Promise<boolean> => {
     try {
       await fileService.uploadFile(file, metadata);
-      // Refresh the file list
       const data = await fileService.getAllFiles();
       setFiles(data);
       setUploadModalOpen(false);
@@ -56,13 +55,16 @@ const FilesPage: React.FC = () => {
 
     try {
       await fileService.deleteFile(fileId);
-      // Refresh the file list
       const data = await fileService.getAllFiles();
       setFiles(data);
     } catch (err) {
       console.error('Error deleting file:', err);
       alert('Failed to delete file. Please try again.');
     }
+  };
+
+  const handlePreview = (file: FileData) => {
+    setSelectedFileForPreview(file);
   };
 
   const filteredFiles = useMemo(() => {
@@ -147,8 +149,7 @@ const FilesPage: React.FC = () => {
                   <th className="p-4 font-semibold text-sm text-gray-600 dark:text-dark-text-secondary">File Name</th>
                   <th className="p-4 font-semibold text-sm text-gray-600 dark:text-dark-text-secondary hidden md:table-cell">Uploader</th>
                   <th className="p-4 font-semibold text-sm text-gray-600 dark:text-dark-text-secondary hidden lg:table-cell">Date</th>
-                  <th className="p-4 font-semibold text-sm text-gray-600 dark:text-dark-text-secondary">Size</th>
-                  <th className="p-4 font-semibold text-sm text-gray-600 dark:text-dark-text-secondary"></th>
+                  <th className="p-4 font-semibold text-sm text-gray-600 dark:text-dark-text-secondary text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
@@ -159,7 +160,7 @@ const FilesPage: React.FC = () => {
                         <FileIcon type={file.fileType} />
                         <div className="flex flex-col">
                           <span>{file.fileName || 'Unknown file'}</span>
-                          {file.topic && <span className="text-xs text-gray-500 dark:text-dark-text-secondary">Topic:{file.topic}</span>}
+                          {file.topic && <span className="text-xs text-gray-500 dark:text-dark-text-secondary">Topic: {file.topic}</span>}
                         </div>
                       </div>
                     </td>
@@ -169,22 +170,27 @@ const FilesPage: React.FC = () => {
                     <td className="p-4 text-gray-600 dark:text-dark-text-secondary hidden lg:table-cell">
                       {file.uploadedAt ? format(parseISO(file.uploadedAt), 'MMM d, yyyy') : 'Unknown date'}
                     </td>
-                    <td className="p-4 text-gray-600 dark:text-dark-text-secondary">
-                      {typeof file.fileSize === 'number' ? formatFileSize(file.fileSize) : 'Unknown size'}
-                    </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handlePreview(file)}
+                          className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          title="Preview file"
+                        >
+                          <Eye size={16} />
+                        </button>
                         <a 
                           href={fileService.getDownloadLink(file.id)}
                           download={file.fileName || `file-${file.id}`}
-                          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 font-medium rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors text-sm"
+                          className="flex items-center justify-center p-2 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors"
+                          title="Download file"
                         >
                           <Download size={16} />
                         </a>
                         {(user?.role === 'admin' || user?.userId === file.uploadedBy?.userId) && (
                           <button
                             onClick={() => handleDeleteFile(file.id)}
-                            className="flex items-center justify-center gap-2 px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                            className="flex items-center justify-center p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                             title="Delete file"
                           >
                             <Trash2 size={16} />
@@ -213,17 +219,13 @@ const FilesPage: React.FC = () => {
         onFileUpload={handleUpload}
         user={user}
       />
+      <FilePreviewModal 
+        isOpen={!!selectedFileForPreview}
+        onClose={() => setSelectedFileForPreview(null)}
+        file={selectedFileForPreview}
+      />
     </>
   );
-};
-
-// Helper function to format file size
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 const FileIcon = ({ type }: { type: string | undefined }) => {
@@ -244,7 +246,6 @@ const FileIcon = ({ type }: { type: string | undefined }) => {
     default: 'text-gray-500',
   };
   
-  // Safely handle possible undefined type
   const fileExtension = type ? (type.split('/').pop()?.toLowerCase() || 'default') : 'default';
   return <File size={24} className={colors[fileExtension] || colors.default} />;
 };
