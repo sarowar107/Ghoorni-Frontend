@@ -9,8 +9,8 @@ import { useToast } from '../../contexts/ToastContext';
 
 type Role = 'Student' | 'CR' | 'Teacher';
 
-const departments = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ECE'];
-const batches = ['18', '19', '20', '21', '22', '23', '24'];
+const departments = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME'];
+const batches = ['19', '20', '21', '22', '23', '24'];
 
 const SignupPage: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<Role>('Student');
@@ -34,8 +34,15 @@ const SignupPage: React.FC = () => {
       const email = formData.get('email')?.toString() || '';
       const password = formData.get('password')?.toString() || '';
       
-      if (!userId) {
+      if (!userId || userId.trim().length === 0) {
         setError('User ID is required');
+        setIsLoading(false);
+        return;
+      }
+
+      // Basic validation for user ID format
+      if (selectedRole === 'Student' && !/^\d+$/.test(userId.trim())) {
+        setError('Student ID should contain only numbers');
         setIsLoading(false);
         return;
       }
@@ -52,12 +59,12 @@ const SignupPage: React.FC = () => {
       }
 
       const userData = {
-        userId: userId,
-        name: formData.get('fullName')?.toString() || '',
-        email: email,
+        userId: userId.trim(),
+        name: (formData.get('fullName')?.toString() || '').trim(),
+        email: email.trim(),
         password: password,
-        deptName: formData.get('department')?.toString() || '',
-        batch: selectedRole !== 'Teacher' ? formData.get('batch')?.toString() || '' : null,
+        deptName: (formData.get('department')?.toString() || '').trim(),
+        batch: selectedRole !== 'Teacher' ? (formData.get('batch')?.toString() || '').trim() : null,
         role: selectedRole.toLowerCase() as 'student' | 'cr' | 'teacher'
       };
       
@@ -84,8 +91,28 @@ const SignupPage: React.FC = () => {
     } catch (err: any) {
       console.error('Registration error:', err);
       
-      // Get error message from response
-      const errorMessage = err.response?.data || 'Failed to register. Please try again.';
+      // Safer error message extraction with fallback
+      let errorMessage = 'Failed to register. Please try again.';
+      
+      try {
+        // Try multiple ways to extract error message
+        if (err.response?.data) {
+          if (typeof err.response.data === 'string') {
+            errorMessage = err.response.data;
+          } else if (err.response.data.message) {
+            errorMessage = err.response.data.message;
+          } else if (err.response.data.error) {
+            errorMessage = err.response.data.error;
+          } else {
+            errorMessage = JSON.stringify(err.response.data);
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+      } catch (parseError) {
+        console.error('Error parsing error response:', parseError);
+        errorMessage = 'An unexpected error occurred. Please try again.';
+      }
       
       // Set local error for immediate display
       setError(errorMessage);
@@ -95,8 +122,13 @@ const SignupPage: React.FC = () => {
           errorMessage.toLowerCase().includes('already exists')) {
         showError('User Already Exists', 'An account with this User ID already exists. Please use a different ID or try logging in.');
       } else if (errorMessage.toLowerCase().includes('email already exists') || 
-                 errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('exists')) {
+                 (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('exists'))) {
         showError('Email Already Registered', 'This email address is already registered. Please use a different email or try logging in.');
+      } else if (errorMessage.toLowerCase().includes('user not found') || 
+                 errorMessage.toLowerCase().includes('invalid') ||
+                 errorMessage.toLowerCase().includes('verification') ||
+                 errorMessage.toLowerCase().includes('check your id')) {
+        showError('Invalid User Information', errorMessage);
       } else {
         showError('Registration Failed', errorMessage);
       }

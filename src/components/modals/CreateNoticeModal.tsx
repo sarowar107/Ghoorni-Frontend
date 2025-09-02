@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { NoticeCreateRequest } from '../../services/noticeService';
 import { useAuth } from '../../contexts/AuthContext';
+import { ChevronDown } from 'lucide-react';
 
 interface CreateNoticeModalProps {
   isOpen: boolean;
@@ -9,33 +10,97 @@ interface CreateNoticeModalProps {
   onNoticeCreate: (notice: NoticeCreateRequest) => Promise<void>;
 }
 
+const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
+const BATCHES = ['19', '20', '21', '22', '23', '24', '1']; // 1 means ALL batches
+
 const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, onNoticeCreate }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [expiryTime, setExpiryTime] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [department, setDepartment] = useState('');
-  const [batch, setBatch] = useState('');
+  const [toDept, setToDept] = useState('');
+  const [toBatch, setToBatch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Reset form when modal opens
+      setTitle('');
+      setContent('');
+      setExpiryTime('');
+      setIsPublic(false);
+      
+      // Set default values based on user role
+      if (user?.role === 'admin') {
+        setToDept('ALL');
+        setToBatch('1');
+      } else if (user?.role === 'teacher') {
+        setToDept(user.deptName || '');
+        setToBatch('');
+      } else if (user?.role === 'cr' || user?.role === 'student') {
+        setToDept(user.deptName || '');
+        setToBatch(user.batch || '');
+      }
+    }
+  }, [isOpen, user]);
+
+  const validateForm = (): boolean => {
+    if (!title.trim() || !content.trim()) {
+      alert('Please fill out both title and content fields.');
+      return false;
+    }
+
+    if (user?.role === 'admin') {
+      if (!toDept) {
+        alert('Please select a target department.');
+        return false;
+      }
+      if (!toBatch) {
+        alert('Please select a target batch.');
+        return false;
+      }
+    } else if (user?.role === 'teacher' && !toBatch) {
+      alert('Please select a target batch.');
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim() || !content.trim()) {
-      alert('Please fill out both title and content fields.');
+    if (!validateForm()) {
       return;
     }
-    
+    // Set default values based on user role
+    let effectiveToDept = toDept;
+    let effectiveToBatch = toBatch;
+
+    if (user?.role === 'teacher') {
+      effectiveToDept = user.deptName;
+      if (!effectiveToBatch) {
+        alert('Please select a batch');
+        return;
+      }
+    } else if (user?.role === 'cr' || user?.role === 'student') {
+      effectiveToDept = user.deptName;
+      effectiveToBatch = user.batch || '';
+    } else if (user?.role === 'admin') {
+      effectiveToDept = effectiveToDept || 'ALL';
+      effectiveToBatch = effectiveToBatch || '1';  // 1 means ALL batches
+    }
+
     setIsLoading(true);
-    
+
     const noticeData: NoticeCreateRequest = {
       title: title.trim(),
       content: content.trim(),
       expiryTime: expiryTime ? new Date(expiryTime).toISOString() : undefined,
       isPublic: user?.role === 'admin' ? isPublic : undefined,
-      department: department || undefined,
-      batch: batch || undefined,
+      toDept: effectiveToDept,
+      toBatch: effectiveToBatch,
     };
 
     try {
@@ -46,8 +111,8 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
       setContent('');
       setExpiryTime('');
       setIsPublic(false);
-      setDepartment('');
-      setBatch('');
+      setToDept('');
+      setToBatch('');
       onClose();
     } catch (error) {
       console.error('Error creating notice:', error);
@@ -101,49 +166,78 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
 
         {user?.role === 'teacher' && (
           <div>
-            <label htmlFor="batch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-              Target Batch (e.g., 20, 21)
+            <label htmlFor="toBatch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+              Target Batch
             </label>
-            <input
-              type="text"
-              id="batch"
-              value={batch}
-              onChange={(e) => setBatch(e.target.value)}
-              placeholder="Leave empty for all batches in your department"
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
-            />
+            <div className="relative mt-1">
+              <select
+                id="toBatch"
+                value={toBatch}
+                onChange={(e) => setToBatch(e.target.value)}
+                className="appearance-none block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
+              >
+                <option value="">Select a batch</option>
+                {BATCHES.map(b => (
+                  <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+        )}
+
+        {user?.role === 'cr' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+              Target Department & Batch
+            </label>
+            <p className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary bg-gray-50 dark:bg-dark-border/50 px-3 py-2 rounded-md">
+              This notice will be visible to {user.deptName} department, batch {user.batch}.
+            </p>
           </div>
         )}
 
         {user?.role === 'admin' && (
           <>
             <div>
-              <label htmlFor="department" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-                Target Department (Optional)
+              <label htmlFor="toDept" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+                Target Department
               </label>
-              <input
-                type="text"
-                id="department"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="e.g., CSE, EEE, ME"
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
-              />
+              <div className="relative mt-1">
+                <select
+                  id="toDept"
+                  value={toDept}
+                  onChange={(e) => setToDept(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
+                >
+                  <option value="">Select a department</option>
+                  {DEPARTMENTS.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
             </div>
             <div>
-              <label htmlFor="batch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-                Target Batch (Optional)
+              <label htmlFor="toBatch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+                Target Batch
               </label>
-              <input
-                type="text"
-                id="batch"
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
-                placeholder="e.g., 20, 21"
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
-              />
+              <div className="relative mt-1">
+                <select
+                  id="toBatch"
+                  value={toBatch}
+                  onChange={(e) => setToBatch(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
+                >
+                  <option value="">Select a batch</option>
+                  {BATCHES.map(b => (
+                    <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center mt-4">
               <input
                 id="isPublic"
                 type="checkbox"

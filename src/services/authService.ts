@@ -3,6 +3,7 @@ import api from './api';
 export interface LoginResponse {
   token: string | null;
   needsEmailVerification: boolean;
+  errorMessage: string | null;
 }
 
 export interface LoginCredentials {
@@ -40,6 +41,15 @@ const authService = {
     try {
       const response = await api.post('/auth/login', { userId, password });
       
+      if (response.data.errorMessage) {
+        throw { 
+          response: { 
+            data: response.data.errorMessage,
+            status: response.status
+          } 
+        };
+      }
+
       // Email verification check disabled
       /* if (response.data.needsEmailVerification) {
         throw { 
@@ -69,14 +79,89 @@ const authService = {
       return userResponse.data;
     } catch (error: any) {
       console.error('Login failed:', error.response?.data || error.message);
-      throw error;
+      
+      // Ensure we always throw a structured error with proper message extraction
+      if (error.response) {
+        // Server responded with error status
+        let errorMessage = 'Login failed. Please try again.';
+        
+        if (error.response.data) {
+          if (typeof error.response.data === 'string') {
+            errorMessage = error.response.data;
+          } else if (error.response.data.errorMessage) {
+            errorMessage = error.response.data.errorMessage;
+          } else if (error.response.data.message) {
+            errorMessage = error.response.data.message;
+          }
+        }
+        
+        throw {
+          response: {
+            data: {
+              errorMessage: errorMessage
+            },
+            status: error.response.status
+          }
+        };
+      } else if (error.request) {
+        // Network error
+        throw {
+          response: {
+            data: {
+              errorMessage: 'Network error. Please check your connection and try again.'
+            },
+            status: 0
+          }
+        };
+      } else {
+        // Other error
+        throw {
+          response: {
+            data: {
+              errorMessage: error.message || 'An unexpected error occurred during login.'
+            },
+            status: 0
+          }
+        };
+      }
     }
   },
 
   // User signup
   signup: async (userData: SignupData) => {
-    const response = await api.post('/auth/signup', userData);
-    return response.data;
+    try {
+      const response = await api.post('/auth/signup', userData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Signup failed:', error.response?.data || error.message);
+      
+      // Ensure we always throw a structured error
+      if (error.response) {
+        // Server responded with error status
+        throw {
+          response: {
+            data: error.response.data || 'Registration failed. Please try again.',
+            status: error.response.status
+          }
+        };
+      } else if (error.request) {
+        // Network error
+        throw {
+          response: {
+            data: 'Network error. Please check your connection and try again.',
+            status: 0
+          }
+        };
+      } else {
+        // Other error
+        throw {
+          response: {
+            data: error.message || 'An unexpected error occurred. Please try again.',
+            status: 0
+          }
+        };
+      }
+    }
   },
 
   // Get current user info
@@ -170,6 +255,12 @@ const authService = {
     const response = await api.post('/auth/resend-verification', null, {
       params: { userId }
     });
+    return response.data;
+  },
+
+  // Verify email with token
+  verifyEmail: async (token: string) => {
+    const response = await api.get(`/auth/verify-email?token=${token}`);
     return response.data;
   }
 };

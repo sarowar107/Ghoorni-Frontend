@@ -45,20 +45,37 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      // Get error message from response
-      const errorMessage = err.response?.data || 'Invalid credentials. Please try again.';
+      // Get error message from response - safer error message extraction
+      let errorMessage = 'An error occurred during login. Please try again.';
+      
+      try {
+        if (err.response?.data) {
+          // Backend returns LoginResponse object with errorMessage field
+          if (typeof err.response.data === 'string') {
+            errorMessage = err.response.data;
+          } else if (err.response.data.errorMessage) {
+            errorMessage = err.response.data.errorMessage;
+          } else if (err.response.data.message) {
+            errorMessage = err.response.data.message;
+          } else {
+            // Fallback to status-based message
+            if (err.response.status === 401) {
+              errorMessage = 'Invalid username or password. Please try again.';
+            }
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+      } catch (parseError) {
+        console.error('Error parsing login error response:', parseError);
+        errorMessage = 'An unexpected error occurred during login. Please try again.';
+      }
       
       // Set local error for immediate display
       setError(errorMessage);
       
-      // Show toast notification based on error type
-      if (errorMessage.toLowerCase().includes('user not found')) {
-        showError('User Not Found', 'The user ID you entered does not exist. Please check your ID and try again.');
-      } else if (errorMessage.toLowerCase().includes('invalid credentials')) {
-        showError('Invalid Credentials', 'The user ID and password combination is incorrect. Please try again.');
-      } else {
-        showError('Login Failed', errorMessage);
-      }
+      // Show toast notification with the specific error from backend
+      showError('Login Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -11,12 +11,14 @@ interface UploadFileModalProps {
   user: User | null;
 }
 
-const BATCHES = ['2020', '2021', '2022', '2023', '2024', '2025']; // Example batches
+const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
+const BATCHES = ['19', '20', '21', '22', '23', '24', '1'];
 
 const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFileUpload, user }) => {
   const [file, setFile] = useState<File | null>(null);
   const [topic, setTopic] = useState('');
-  const [batch, setBatch] = useState('');
+  const [toDept, setToDept] = useState('');
+  const [toBatch, setToBatch] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   
   const [isUploading, setIsUploading] = useState(false);
@@ -27,7 +29,8 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
     if (isOpen) {
       setFile(null);
       setTopic('');
-      setBatch('');
+      setToDept('');
+      setToBatch('');
       setIsPublic(true);
       setErrorMsg(null);
       setIsUploading(false);
@@ -50,9 +53,19 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
       setErrorMsg('Please provide a topic or content description.');
       return false;
     }
-    if ((user?.role === 'admin' || user?.role === 'teacher') && !batch) {
+    if (user?.role === 'teacher' && !toBatch) {
       setErrorMsg('Please select a batch.');
       return false;
+    }
+    if (user?.role === 'admin') {
+      if (!toDept) {
+        setErrorMsg('Please select a target department.');
+        return false;
+      }
+      if (!toBatch) {
+        setErrorMsg('Please select a target batch.');
+        return false;
+      }
     }
     return true;
   };
@@ -63,18 +76,27 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
     
     if (!validateForm() || !file || !user) return;
     
-    const metadata: UploadMetadata = { topic };
+    // Set default values based on user role
+    let effectiveToDept = toDept;
+    let effectiveToBatch = toBatch;
 
     if (user.role === 'admin') {
-      metadata.batch = batch;
-      metadata.isPublic = isPublic;
+      effectiveToDept = toDept || 'ALL';
+      effectiveToBatch = toBatch || '1';
     } else if (user.role === 'teacher') {
-      metadata.batch = batch;
-      metadata.isPublic = false;
+      effectiveToDept = user.deptName || '';
+      effectiveToBatch = toBatch;
     } else if (user.role === 'cr') {
-      metadata.batch = user.batch || '';
-      metadata.isPublic = false;
+      effectiveToDept = user.deptName || '';
+      effectiveToBatch = user.batch || '';
     }
+
+    const metadata: UploadMetadata = { 
+      topic,
+      toDept: effectiveToDept,
+      toBatch: effectiveToBatch,
+      isPublic: user.role === 'admin' ? isPublic : false
+    };
     
     try {
       setIsUploading(true);
@@ -119,9 +141,9 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
             </label>
             <div className="relative mt-1">
               <select
-                id="batch"
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
+                id="toBatch"
+                value={toBatch}
+                onChange={(e) => setToBatch(e.target.value)}
                 className="appearance-none w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm bg-transparent"
               >
                 <option value="" disabled>Select a batch</option>

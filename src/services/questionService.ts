@@ -35,6 +35,9 @@ export interface Answer {
 export interface QuestionCreateRequest {
   title: string;
   description: string;
+  toDept: string;
+  toBatch: string;
+  isPublic?: boolean;
 }
 
 export interface AnswerCreateRequest {

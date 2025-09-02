@@ -1,0 +1,17 @@
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/*.html
+  Cache-Control: no-cache
+
+/*.js
+  Cache-Control: public, max-age=31536000
+
+/*.css
+  Cache-Control: public, max-age=31536000
+
+/*.{png,jpg,jpeg,gif,webp,svg,ico}
+  Cache-Control: public, max-age=31536000

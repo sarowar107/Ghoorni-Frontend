@@ -55,9 +55,15 @@ const QuestionDetailPage: React.FC = () => {
       setNewAnswer('');
       // Refresh question to get the new answer
       await fetchQuestionDetails();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting answer:', err);
-      alert('Failed to submit answer. Please try again.');
+      
+      // Check if it's an email verification error
+      if (err?.response?.status === 403 && err?.response?.data?.includes('Email verification required')) {
+        alert('Email verification required to answer questions. Please verify your email first.');
+      } else {
+        alert('Failed to submit answer. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

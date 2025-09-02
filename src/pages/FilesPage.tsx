@@ -41,9 +41,15 @@ const FilesPage: React.FC = () => {
       setFiles(data);
       setUploadModalOpen(false);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error uploading file:', err);
-      alert('Failed to upload file. Please try again.');
+      
+      // Check if it's an email verification error
+      if (err?.response?.status === 403 && err?.response?.data?.includes('Email verification required')) {
+        alert('Email verification required to upload files. Please verify your email first.');
+      } else {
+        alert('Failed to upload file. Please try again.');
+      }
       return false;
     }
   };

@@ -7,8 +7,8 @@ export interface Notice {
   createdAt: string;
   isPublic: boolean;
   expiryTime?: string;
-  department?: string;
-  batch?: string;
+  toDept: string;
+  toBatch: string;
   createdBy: {
     userId: string;
     name: string;
@@ -23,8 +23,8 @@ export interface NoticeCreateRequest {
   content: string;
   isPublic?: boolean;
   expiryTime?: string;
-  department?: string;
-  batch?: string;
+  toDept: string;
+  toBatch: string;
 }
 
 const noticeService = {

@@ -10,6 +10,7 @@ export interface User {
   deptName: string;
   batch: string | null;
   role: UserRole;
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -23,6 +24,7 @@ interface AuthContextType {
   updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   deleteAccount: () => Promise<void>;
   refreshUserData: () => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -140,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userData = await authService.getCurrentUser();
       if (userData) {
+        console.log('Refreshed user data:', userData);
         setUser(userData);
       }
     } catch (error) {
@@ -196,6 +199,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    if (!user) throw new Error('Not authenticated');
+    
+    setLoading(true);
+    try {
+      await authService.resendVerification(user.userId);
+    } catch (error) {
+      console.error('Error resending verification email:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated, 
@@ -207,7 +224,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       updateName,
       updatePassword,
       deleteAccount,
-      refreshUserData
+      refreshUserData,
+      resendVerificationEmail
     }}>
       {children}
     </AuthContext.Provider>

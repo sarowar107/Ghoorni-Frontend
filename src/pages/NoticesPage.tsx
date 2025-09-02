@@ -40,9 +40,15 @@ const NoticesPage: React.FC = () => {
   const handleCreateNotice = async (newNotice: NoticeCreateRequest) => {
     try {
       await createNoticeMutation.mutateAsync(newNotice);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating notice:', err);
-      alert('Failed to create notice. Please try again.');
+      
+      // Check if it's an email verification error
+      if (err?.response?.status === 403 && err?.response?.data?.includes('Email verification required')) {
+        alert('Email verification required to create notices. Please verify your email first.');
+      } else {
+        alert('Failed to create notice. Please try again.');
+      }
     }
   };
 

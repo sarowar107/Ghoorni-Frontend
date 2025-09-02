@@ -13,8 +13,36 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [toDept, setToDept] = useState('');
+  const [toBatch, setToBatch] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
+  const BATCHES = ['19', '20', '21', '22', '23', '24', '1'];
+
+  React.useEffect(() => {
+    if (isOpen) {
+      // Reset form when modal opens
+      setTitle('');
+      setDescription('');
+      setError(null);
+      setIsSubmitting(false);
+      
+      // Set default values based on user role
+      if (user?.role === 'admin') {
+        setToDept('ALL');
+        setToBatch('1');
+      } else if (user?.role === 'teacher') {
+        setToDept(user.deptName || '');
+        setToBatch('');
+      } else if (user?.role === 'cr' || user?.role === 'student') {
+        setToDept(user.deptName || '');
+        setToBatch(user.batch || '');
+      }
+    }
+  }, [isOpen, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,14 +59,43 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
     setError(null);
 
     try {
-      const questionData: QuestionCreateRequest = { title, description };
+      let effectiveToDept = toDept;
+      let effectiveToBatch = toBatch;
+
+      if (user?.role === 'teacher') {
+        effectiveToDept = user.deptName;
+        if (!effectiveToBatch) {
+          setError('Please select a target batch.');
+          return;
+        }
+      } else if (user?.role === 'cr' || user?.role === 'student') {
+        effectiveToDept = user.deptName || '';
+        effectiveToBatch = user.batch || '';
+      } else if (user?.role === 'admin') {
+        effectiveToDept = effectiveToDept || 'ALL';
+        effectiveToBatch = effectiveToBatch || '1';
+      }
+
+      const questionData: QuestionCreateRequest = {
+        title,
+        description,
+        toDept: effectiveToDept,
+        toBatch: effectiveToBatch,
+        isPublic: user?.role === 'admin' ? isPublic : false
+      };
       await questionService.createQuestion(questionData);
       setTitle('');
       setDescription('');
       onQuestionAsked(); // This will close the modal and refresh the list
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create question:', err);
-      setError('An unexpected error occurred. Please try again.');
+      
+      // Check if it's an email verification error
+      if (err?.response?.status === 403 && err?.response?.data?.includes('Email verification required')) {
+        setError('Email verification required to ask questions. Please verify your email first.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +142,86 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
               required
             />
           </div>
+
+          {user?.role === 'teacher' && (
+            <div>
+              <label htmlFor="toBatch" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
+                Target Batch
+              </label>
+              <select
+                id="toBatch"
+                value={toBatch}
+                onChange={(e) => setToBatch(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+              >
+                <option value="">Select a batch</option>
+                {BATCHES.map(b => (
+                  <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {user?.role === 'cr' && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
+                Target Department & Batch
+              </label>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary bg-gray-50 dark:bg-dark-border/50 px-4 py-2 rounded-lg">
+                This question will be visible to {user.deptName} department, batch {user.batch}.
+              </p>
+            </div>
+          )}
+
+          {user?.role === 'admin' && (
+            <>
+              <div>
+                <label htmlFor="toDept" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
+                  Target Department
+                </label>
+                <select
+                  id="toDept"
+                  value={toDept}
+                  onChange={(e) => setToDept(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+                >
+                  <option value="">Select a department</option>
+                  {DEPARTMENTS.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="toBatch" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
+                  Target Batch
+                </label>
+                <select
+                  id="toBatch"
+                  value={toBatch}
+                  onChange={(e) => setToBatch(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+                >
+                  <option value="">Select a batch</option>
+                  {BATCHES.map(b => (
+                    <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="isPublic"
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  className="h-4 w-4 text-cuet-primary-600 focus:ring-cuet-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isPublic" className="text-sm text-gray-900 dark:text-dark-text">
+                  Make Public (Visible to all users)
+                </label>
+              </div>
+            </>
+          )}
+
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex justify-end items-center gap-4 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-dark-text bg-gray-100 dark:bg-dark-border rounded-lg hover:bg-gray-200 dark:hover:bg-dark-border/80 transition-colors">

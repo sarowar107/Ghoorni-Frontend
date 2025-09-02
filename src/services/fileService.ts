@@ -64,7 +64,8 @@ export interface FileData {
 
 export interface UploadMetadata {
   topic: string;
-  batch?: string;
+  toDept?: string;
+  toBatch?: string;
   isPublic?: boolean;
 }
 
@@ -116,8 +117,11 @@ const fileService = {
     formData.append('file', file);
     formData.append('topic', metadata.topic);
 
-    if (metadata.batch) {
-      formData.append('batch', metadata.batch);
+    if (metadata.toDept) {
+      formData.append('toDept', metadata.toDept);
+    }
+    if (metadata.toBatch) {
+      formData.append('toBatch', metadata.toBatch);
     }
     if (typeof metadata.isPublic === 'boolean') {
       formData.append('isPublic', String(metadata.isPublic));

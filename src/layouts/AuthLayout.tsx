@@ -1,14 +1,19 @@
 import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 const AuthLayout: React.FC = () => {
   const { theme } = useTheme();
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
   
-  // If user is already authenticated, redirect to dashboard
-  if (isAuthenticated && !loading) {
+  // Allow email verification page even for authenticated users
+  const isVerificationPage = location.pathname === '/verify-email';
+  
+  // If user is already authenticated, redirect to dashboard (except for verification page)
+  if (isAuthenticated && !loading && !isVerificationPage) {
     return <Navigate to="/" replace />;
   }
   
@@ -31,7 +36,9 @@ const AuthLayout: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-cuet-primary-900/10 to-cuet-secondary-700/10 dark:from-cuet-primary-950/20 dark:to-black/20"></div>
       </div>
       <main className="w-full max-w-md z-10">
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );
