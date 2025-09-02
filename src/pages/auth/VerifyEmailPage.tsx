@@ -14,46 +14,33 @@ const VerifyEmailPage: React.FC = () => {
   const { refreshUserData, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
+  const [hasAttemptedVerification, setHasAttemptedVerification] = useState(false);
+  const [lastEmailSentTime, setLastEmailSentTime] = useState<number>(0);
 
   // Get token from URL params or userId from location state or current user
   const token = searchParams.get('token');
   const userId = location.state?.userId || user?.userId;
 
-  // Helper function to retry user data refresh until email is verified
-  const refreshUserDataUntilVerified = async (maxRetries = 5) => {
-    for (let i = 0; i < maxRetries; i++) {
+  // Simplified verification function - no complex retry logic
+  const performVerification = async (token: string) => {
+    try {
+      console.log('Starting email verification with token:', token);
+      await authService.verifyEmail(token);
+      console.log('Email verification API call successful');
+      
+      // Simple refresh of user data without dependency issues
       try {
-        console.log(`Refreshing user data (attempt ${i + 1}/${maxRetries})...`);
         await refreshUserData();
-        
-        // Wait a moment for the context to update
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Check if user data was refreshed and email is now verified
-        const currentUser = await authService.getCurrentUser();
-        console.log('Current user data after refresh:', currentUser);
-        
-        if (currentUser && currentUser.emailVerified === true) {
-          console.log('Email verification confirmed in user data');
-          return true;
-        } else {
-          console.log(`Email not yet verified (attempt ${i + 1}), current status:`, currentUser?.emailVerified);
-        }
-        
-        // Wait before next retry
-        if (i < maxRetries - 1) {
-          console.log(`Waiting 1.5 seconds before retry ${i + 2}...`);
-          await new Promise(resolve => setTimeout(resolve, 1500));
-        }
-      } catch (error) {
-        console.error(`Error refreshing user data (attempt ${i + 1}):`, error);
-        if (i < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-        }
+        console.log('User data refreshed successfully');
+      } catch (refreshError) {
+        console.warn('Failed to refresh user data, but verification succeeded:', refreshError);
       }
+      
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error verifying email:', error);
+      return { success: false, error };
     }
-    console.log('Max retries reached, email verification status may not be updated yet');
-    return false;
   };
   
   const handleResendEmail = async () => {
@@ -62,54 +49,55 @@ const VerifyEmailPage: React.FC = () => {
       return;
     }
 
+    // Prevent rapid duplicate calls (within 5 seconds)
+    const now = Date.now();
+    if (now - lastEmailSentTime < 5000) {
+      console.log('Email resend request ignored - too soon after last send');
+      showError('Too Fast', 'Please wait a moment before requesting another email.');
+      return;
+    }
+
     setLoading(true);
+    setLastEmailSentTime(now);
+    
     try {
       await authService.resendVerification(userId);
       showSuccess('Email Sent', 'Verification email has been resent. Please check your inbox.');
     } catch (error: any) {
       console.error('Error resending verification:', error);
+      // Reset the timestamp on error so user can retry
+      setLastEmailSentTime(0);
       showError('Error', error.response?.data || 'Failed to resend verification email');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle token verification
+  // Handle token verification - only run once
   useEffect(() => {
     const verifyToken = async () => {
+      // Prevent multiple executions
+      if (hasAttemptedVerification) {
+        console.log('Verification already attempted, skipping...');
+        return;
+      }
+
       if (token) {
+        console.log('Attempting email verification for the first time');
+        setHasAttemptedVerification(true);
         setLoading(true);
-        try {
-          console.log('Starting email verification with token:', token);
-          await authService.verifyEmail(token);
-          console.log('Email verification API call successful');
-          
-          // Wait a bit for the backend to fully process the verification
-          console.log('Waiting for backend to process verification...');
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          // Refresh user data with retry logic to ensure verification is reflected
-          console.log('Starting user data refresh with retry logic...');
-          const verificationConfirmed = await refreshUserDataUntilVerified();
-          
-          if (verificationConfirmed) {
-            console.log('Email verification successfully confirmed in user data');
-            setVerificationStatus('success');
-            showSuccess('Email Verified', 'Your email has been verified successfully!');
-          } else {
-            console.warn('Email verification may not be fully reflected in user data yet');
-            // Still show success but mention data sync
-            setVerificationStatus('success');
-            showSuccess('Email Verified', 'Your email has been verified successfully!');
-          }
-          
-        } catch (error: any) {
-          console.error('Error verifying email:', error);
+        
+        const result = await performVerification(token);
+        
+        if (result.success) {
+          setVerificationStatus('success');
+          showSuccess('Email Verified', 'Your email has been verified successfully!');
+        } else {
           setVerificationStatus('error');
           showError('Verification Failed', 'Invalid or expired verification token.');
-        } finally {
-          setLoading(false);
         }
+        
+        setLoading(false);
       } else if (!userId && !token) {
         // Only redirect to login if there's no token and no userId
         navigate('/login');
@@ -117,7 +105,7 @@ const VerifyEmailPage: React.FC = () => {
     };
 
     verifyToken();
-  }, [token, userId, navigate, showSuccess, showError, refreshUserData]);
+  }, [token, userId, navigate]); // Removed refreshUserData from dependencies
 
   // Show different content based on verification status
   const renderContent = () => {

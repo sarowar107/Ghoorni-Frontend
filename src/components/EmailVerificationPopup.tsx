@@ -10,11 +10,21 @@ const EmailVerificationPopup: React.FC<EmailVerificationPopupProps> = ({ onClose
   const { user, resendVerificationEmail } = useAuth();
   const { showSuccess, showError } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [lastEmailSentTime, setLastEmailSentTime] = useState<number>(0);
 
   const handleVerifyEmail = async () => {
     if (!user) return;
     
+    // Prevent rapid duplicate calls (within 5 seconds)
+    const now = Date.now();
+    if (now - lastEmailSentTime < 5000) {
+      console.log('Email send request ignored - too soon after last send');
+      showError('Too Fast', 'Please wait a moment before requesting another email.');
+      return;
+    }
+    
     setIsLoading(true);
+    setLastEmailSentTime(now);
     
     try {
       await resendVerificationEmail();
@@ -25,6 +35,8 @@ const EmailVerificationPopup: React.FC<EmailVerificationPopupProps> = ({ onClose
       );
     } catch (error: any) {
       console.error('Error sending verification email:', error);
+      // Reset the timestamp on error so user can retry
+      setLastEmailSentTime(0);
       showError(
         'Verification Failed',
         'Failed to send verification email. Please try again.',

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
 
 type UserRole = 'student' | 'cr' | 'teacher' | 'admin';
@@ -135,8 +135,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
 
   // Add new profile functions
-  const refreshUserData = async () => {
-    if (!isAuthenticated) return;
+  const refreshUserData = useCallback(async () => {
+    // Check for token instead of isAuthenticated to avoid dependency issues
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
     
     setLoading(true);
     try {
@@ -150,7 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array to prevent recreations
   
   const updateName = async (name: string) => {
     if (!user) throw new Error('Not authenticated');
