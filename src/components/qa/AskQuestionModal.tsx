@@ -9,6 +9,12 @@ interface AskQuestionModalProps {
   onQuestionAsked: () => void;
 }
 
+const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
+const BATCHES = ['19', '20', '21', '22', '23', '24', '1'];
+
+const DEPT_OPTIONS = DEPARTMENTS.map(dept => ({ value: dept, label: dept }));
+const BATCH_OPTIONS = BATCHES.map(b => ({ value: b, label: b === '1' ? 'ALL' : b }));
+
 const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, onQuestionAsked }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -19,8 +25,8 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
-  const BATCHES = ['19', '20', '21', '22', '23', '24', '1'];
+  const selectStyles = "w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none text-gray-900 dark:text-dark-text";
+  const inputStyles = "w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none";
 
   React.useEffect(() => {
     if (isOpen) {
@@ -66,6 +72,7 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
         effectiveToDept = user.deptName;
         if (!effectiveToBatch) {
           setError('Please select a target batch.');
+          setIsSubmitting(false);
           return;
         }
       } else if (user?.role === 'cr' || user?.role === 'student') {
@@ -90,7 +97,6 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
     } catch (err: any) {
       console.error('Failed to create question:', err);
       
-      // Check if it's an email verification error
       if (err?.response?.status === 403 && err?.response?.data?.includes('Email verification required')) {
         setError('Email verification required to ask questions. Please verify your email first.');
       } else {
@@ -123,7 +129,7 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., How to setup a Vite project with React?"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+              className={inputStyles}
               required
             />
             <p className="text-xs text-gray-500 dark:text-dark-text-secondary mt-1">Be specific and imagine you’re asking a question to another person.</p>
@@ -145,19 +151,16 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
 
           {user?.role === 'teacher' && (
             <div>
-              <label htmlFor="toBatch" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
-                Target Batch
-              </label>
+              <label htmlFor="toBatchTeacher" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">Target Batch</label>
               <select
-                id="toBatch"
+                id="toBatchTeacher"
                 value={toBatch}
                 onChange={(e) => setToBatch(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+                className={selectStyles}
+                required
               >
-                <option value="">Select a batch</option>
-                {BATCHES.map(b => (
-                  <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
-                ))}
+                <option value="" disabled>Select a batch</option>
+                {BATCH_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
             </div>
           )}
@@ -176,35 +179,27 @@ const AskQuestionModal: React.FC<AskQuestionModalProps> = ({ isOpen, onClose, on
           {user?.role === 'admin' && (
             <>
               <div>
-                <label htmlFor="toDept" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
-                  Target Department
-                </label>
+                <label htmlFor="toDeptAdmin" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">Target Department</label>
                 <select
-                  id="toDept"
+                  id="toDeptAdmin"
                   value={toDept}
                   onChange={(e) => setToDept(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+                  className={selectStyles}
+                  required
                 >
-                  <option value="">Select a department</option>
-                  {DEPARTMENTS.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
+                  {DEPT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
               </div>
               <div>
-                <label htmlFor="toBatch" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">
-                  Target Batch
-                </label>
+                <label htmlFor="toBatchAdmin" className="block text-sm font-semibold text-gray-700 dark:text-dark-text mb-2">Target Batch</label>
                 <select
-                  id="toBatch"
+                  id="toBatchAdmin"
                   value={toBatch}
                   onChange={(e) => setToBatch(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-border/50 focus:ring-2 focus:ring-cuet-primary-500 focus:outline-none"
+                  className={selectStyles}
+                  required
                 >
-                  <option value="">Select a batch</option>
-                  {BATCHES.map(b => (
-                    <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
-                  ))}
+                  {BATCH_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
               </div>
               <div className="flex items-center space-x-2">

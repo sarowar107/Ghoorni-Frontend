@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { NoticeCreateRequest } from '../../services/noticeService';
 import { useAuth } from '../../contexts/AuthContext';
-import { ChevronDown } from 'lucide-react';
 
 interface CreateNoticeModalProps {
   isOpen: boolean;
@@ -13,6 +12,9 @@ interface CreateNoticeModalProps {
 const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
 const BATCHES = ['19', '20', '21', '22', '23', '24', '1']; // 1 means ALL batches
 
+const DEPT_OPTIONS = DEPARTMENTS.map(dept => ({ value: dept, label: dept }));
+const BATCH_OPTIONS = BATCHES.map(b => ({ value: b, label: b === '1' ? 'ALL' : b }));
+
 const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, onNoticeCreate }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -22,6 +24,9 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
   const [toDept, setToDept] = useState('');
   const [toBatch, setToBatch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const selectStyles = "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm rounded-md bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text";
+  const inputStyles = "mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm";
 
   useEffect(() => {
     if (isOpen) {
@@ -135,7 +140,7 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
+            className={inputStyles}
           />
         </div>
         <div>
@@ -148,7 +153,7 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
+            className={inputStyles}
           />
         </div>
         <div>
@@ -160,29 +165,23 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
             id="expiryTime"
             value={expiryTime}
             onChange={(e) => setExpiryTime(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
+            className={`${inputStyles} dark:[color-scheme:dark]`}
           />
         </div>
 
         {user?.role === 'teacher' && (
           <div>
-            <label htmlFor="toBatch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-              Target Batch
-            </label>
-            <div className="relative mt-1">
-              <select
-                id="toBatch"
-                value={toBatch}
-                onChange={(e) => setToBatch(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
-              >
-                <option value="">Select a batch</option>
-                {BATCHES.map(b => (
-                  <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
+            <label htmlFor="toBatchTeacher" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Target Batch</label>
+            <select
+              id="toBatchTeacher"
+              value={toBatch}
+              onChange={(e) => setToBatch(e.target.value)}
+              className={selectStyles}
+              required
+            >
+              <option value="" disabled>Select a batch</option>
+              {BATCH_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
           </div>
         )}
 
@@ -200,42 +199,28 @@ const CreateNoticeModal: React.FC<CreateNoticeModalProps> = ({ isOpen, onClose, 
         {user?.role === 'admin' && (
           <>
             <div>
-              <label htmlFor="toDept" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-                Target Department
-              </label>
-              <div className="relative mt-1">
-                <select
-                  id="toDept"
-                  value={toDept}
-                  onChange={(e) => setToDept(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
-                >
-                  <option value="">Select a department</option>
-                  {DEPARTMENTS.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-              </div>
+              <label htmlFor="toDeptAdmin" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Target Department</label>
+              <select
+                id="toDeptAdmin"
+                value={toDept}
+                onChange={(e) => setToDept(e.target.value)}
+                className={selectStyles}
+                required
+              >
+                {DEPT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
             </div>
             <div>
-              <label htmlFor="toBatch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-                Target Batch
-              </label>
-              <div className="relative mt-1">
-                <select
-                  id="toBatch"
-                  value={toBatch}
-                  onChange={(e) => setToBatch(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm"
-                >
-                  <option value="">Select a batch</option>
-                  {BATCHES.map(b => (
-                    <option key={b} value={b}>{b === '1' ? 'ALL' : b}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-              </div>
+              <label htmlFor="toBatchAdmin" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Target Batch</label>
+              <select
+                id="toBatchAdmin"
+                value={toBatch}
+                onChange={(e) => setToBatch(e.target.value)}
+                className={selectStyles}
+                required
+              >
+                {BATCH_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
             </div>
             <div className="flex items-center mt-4">
               <input

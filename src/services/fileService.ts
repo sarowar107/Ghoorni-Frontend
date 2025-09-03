@@ -34,6 +34,7 @@ const getFileTypeFromName = (filename: string): string => {
 export interface FileResponseFromBackend {
   fileId: number;
   topic: string;
+  category: string;
   content: string;
   uploadedAt: string;
   isPublic: boolean;
@@ -59,11 +60,13 @@ export interface FileData {
   };
   filePath: string;
   topic: string;
+  category: string;
   isPublic: boolean;
 }
 
 export interface UploadMetadata {
   topic: string;
+  category: string;
   toDept?: string;
   toBatch?: string;
   isPublic?: boolean;
@@ -86,6 +89,7 @@ const fileService = {
       },
       filePath: file.content,
       topic: file.topic,
+      category: file.category || 'Others',
       isPublic: file.isPublic
     }));
   },
@@ -107,6 +111,7 @@ const fileService = {
       },
       filePath: file.content,
       topic: file.topic,
+      category: file.category || 'Others',
       isPublic: file.isPublic
     } as FileData;
   },
@@ -116,6 +121,7 @@ const fileService = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('topic', metadata.topic);
+    formData.append('category', metadata.category);
 
     if (metadata.toDept) {
       formData.append('toDept', metadata.toDept);
@@ -147,6 +153,7 @@ const fileService = {
       },
       filePath: backendFile.content,
       topic: backendFile.topic,
+      category: backendFile.category || 'Others',
       isPublic: backendFile.isPublic
     } as FileData;
   },

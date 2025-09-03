@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { UploadCloud, ChevronDown } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import { User } from '../../contexts/AuthContext';
 import { UploadMetadata } from '../../services/fileService';
+import { FILE_CATEGORIES } from '../../constants/files';
 
 interface UploadFileModalProps {
   isOpen: boolean;
@@ -11,12 +12,14 @@ interface UploadFileModalProps {
   user: User | null;
 }
 
-const DEPARTMENTS = ['CSE', 'EEE', 'ME', 'CE', 'Arch', 'URP', 'MIE', 'PME', 'ETE', 'BME', 'ALL'];
 const BATCHES = ['19', '20', '21', '22', '23', '24', '1'];
+const BATCH_OPTIONS = BATCHES.map(b => ({ value: b, label: b === '1' ? 'ALL' : b }));
+const CATEGORY_OPTIONS = FILE_CATEGORIES.map(c => ({ value: c, label: c }));
 
 const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFileUpload, user }) => {
   const [file, setFile] = useState<File | null>(null);
   const [topic, setTopic] = useState('');
+  const [category, setCategory] = useState('');
   const [toDept, setToDept] = useState('');
   const [toBatch, setToBatch] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -24,11 +27,14 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const selectStyles = "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-border focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm rounded-md bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text";
+
   useEffect(() => {
     // Reset form state when modal opens or user changes
     if (isOpen) {
       setFile(null);
       setTopic('');
+      setCategory('');
       setToDept('');
       setToBatch('');
       setIsPublic(true);
@@ -51,6 +57,10 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
     }
     if (!topic.trim()) {
       setErrorMsg('Please provide a topic or content description.');
+      return false;
+    }
+    if (!category) {
+      setErrorMsg('Please select a category for the file.');
       return false;
     }
     if (user?.role === 'teacher' && !toBatch) {
@@ -93,6 +103,7 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
 
     const metadata: UploadMetadata = { 
       topic,
+      category,
       toDept: effectiveToDept,
       toBatch: effectiveToBatch,
       isPublic: user.role === 'admin' ? isPublic : false
@@ -134,23 +145,33 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
           />
         </div>
 
+        <div>
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Category</label>
+          <select
+            id="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={selectStyles}
+            required
+          >
+            <option value="" disabled>Select a category</option>
+            {CATEGORY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </div>
+
         {(user.role === 'admin' || user.role === 'teacher') && (
           <div>
-            <label htmlFor="batch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
-              Batch
-            </label>
-            <div className="relative mt-1">
-              <select
-                id="toBatch"
-                value={toBatch}
-                onChange={(e) => setToBatch(e.target.value)}
-                className="appearance-none w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-cuet-primary-500 focus:border-cuet-primary-500 sm:text-sm bg-transparent"
-              >
-                <option value="" disabled>Select a batch</option>
-                {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
+            <label htmlFor="toBatch" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Batch</label>
+            <select
+              id="toBatch"
+              value={toBatch}
+              onChange={(e) => setToBatch(e.target.value)}
+              className={selectStyles}
+              required
+            >
+              <option value="" disabled>Select a batch</option>
+              {BATCH_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
           </div>
         )}
 
