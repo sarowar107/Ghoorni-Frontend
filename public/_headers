@@ -1,8 +1,10 @@
 /*
-  X-Frame-Options: DENY
+  
   X-XSS-Protection: 1; mode=block
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' https:; frame-src 'self' https://drive.google.com https://*.google.com https://www.youtube.com https://youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://docs.google.com; object-src 'self' https://drive.google.com https://docs.google.com; connect-src 'self' https:; font-src 'self' data:;
+
 
 /*.html
   Cache-Control: no-cache
