@@ -16,16 +16,21 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
 
   if (!file) return null;
 
-  const fileUrl = fileService.getDownloadLink(file.id);
+  // Use Google Drive view link if available, otherwise fallback to download link
+  const fileUrl = file.driveViewLink || fileService.getDownloadLink(file.id);
 
   const isImage = file.fileType.startsWith('image/');
   const isPlainText = file.fileType.startsWith('text/');
+  const hasGoogleDriveLink = !!file.driveViewLink;
 
-  // Directly embed images and plain text files as they are safe and universally supported.
-  // For other types like PDF, DOCX, etc., we use the Google Docs viewer as a robust fallback.
-  // This correctly handles 'Content-Disposition: attachment' headers that would otherwise force a download.
-  const canBeEmbeddedDirectly = isImage || isPlainText;
-  const previewUrl = canBeEmbeddedDirectly ? fileUrl : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+  // If we have a Google Drive view link, use it directly for embedding
+  // Otherwise, use the Google Docs viewer for non-directly embeddable files
+  const canBeEmbeddedDirectly = isImage || isPlainText || hasGoogleDriveLink;
+  const previewUrl = hasGoogleDriveLink 
+    ? fileUrl.replace('/view', '/preview') // Convert view link to preview link for embedding
+    : canBeEmbeddedDirectly 
+      ? fileUrl 
+      : `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`;
 
   const handleFullScreen = () => {
     if (!previewRef.current) return;

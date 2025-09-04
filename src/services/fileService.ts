@@ -36,6 +36,12 @@ export interface FileResponseFromBackend {
   topic: string;
   category: string;
   content: string;
+  originalFilename?: string;
+  fileSize?: number;
+  mimeType?: string;
+  driveFileId?: string;
+  driveViewLink?: string;
+  driveDownloadLink?: string;
   uploadedAt: string;
   isPublic: boolean;
   uploadedBy: {
@@ -62,6 +68,9 @@ export interface FileData {
   topic: string;
   category: string;
   isPublic: boolean;
+  driveFileId?: string;
+  driveViewLink?: string;
+  driveDownloadLink?: string;
 }
 
 export interface UploadMetadata {
@@ -79,9 +88,9 @@ const fileService = {
     // Map backend response to our frontend file structure
     return response.data.map((file: FileResponseFromBackend): FileData => ({
       id: file.fileId.toString(),
-      fileName: file.content.substring(file.content.indexOf('_') + 1), // Extract original filename from content
-      fileType: getFileTypeFromName(file.content),
-      fileSize: 0, // Backend doesn't provide size
+      fileName: file.originalFilename || file.content.substring(file.content.indexOf('_') + 1), // Use original filename if available
+      fileType: file.mimeType || getFileTypeFromName(file.originalFilename || file.content),
+      fileSize: file.fileSize || 0,
       uploadedAt: file.uploadedAt,
       uploadedBy: {
         userId: file.uploadedBy?.userId || '',
@@ -90,7 +99,10 @@ const fileService = {
       filePath: file.content,
       topic: file.topic,
       category: file.category || 'Others',
-      isPublic: file.isPublic
+      isPublic: file.isPublic,
+      driveFileId: file.driveFileId,
+      driveViewLink: file.driveViewLink,
+      driveDownloadLink: file.driveDownloadLink
     }));
   },
 
@@ -101,9 +113,9 @@ const fileService = {
     
     return {
       id: file.fileId.toString(),
-      fileName: file.content.substring(file.content.indexOf('_') + 1),
-      fileType: getFileTypeFromName(file.content),
-      fileSize: 0,
+      fileName: file.originalFilename || file.content.substring(file.content.indexOf('_') + 1),
+      fileType: file.mimeType || getFileTypeFromName(file.originalFilename || file.content),
+      fileSize: file.fileSize || 0,
       uploadedAt: file.uploadedAt,
       uploadedBy: {
         userId: file.uploadedBy?.userId || '',
@@ -112,7 +124,10 @@ const fileService = {
       filePath: file.content,
       topic: file.topic,
       category: file.category || 'Others',
-      isPublic: file.isPublic
+      isPublic: file.isPublic,
+      driveFileId: file.driveFileId,
+      driveViewLink: file.driveViewLink,
+      driveDownloadLink: file.driveDownloadLink
     } as FileData;
   },
 
@@ -143,9 +158,9 @@ const fileService = {
     const backendFile = response.data as FileResponseFromBackend;
     return {
       id: backendFile.fileId.toString(),
-      fileName: backendFile.content.substring(backendFile.content.indexOf('_') + 1),
-      fileType: getFileTypeFromName(backendFile.content),
-      fileSize: file.size, // We have the actual file size during upload
+      fileName: backendFile.originalFilename || backendFile.content.substring(backendFile.content.indexOf('_') + 1),
+      fileType: backendFile.mimeType || getFileTypeFromName(backendFile.originalFilename || backendFile.content),
+      fileSize: backendFile.fileSize || file.size, // Use backend size if available, otherwise use original file size
       uploadedAt: backendFile.uploadedAt,
       uploadedBy: {
         userId: backendFile.uploadedBy?.userId || '',
@@ -154,7 +169,10 @@ const fileService = {
       filePath: backendFile.content,
       topic: backendFile.topic,
       category: backendFile.category || 'Others',
-      isPublic: backendFile.isPublic
+      isPublic: backendFile.isPublic,
+      driveFileId: backendFile.driveFileId,
+      driveViewLink: backendFile.driveViewLink,
+      driveDownloadLink: backendFile.driveDownloadLink
     } as FileData;
   },
 
@@ -167,6 +185,21 @@ const fileService = {
   // Download file
   getDownloadLink: (fileId: string) => {
     return `${api.defaults.baseURL}/files/download/${fileId}`;
+  },
+
+  // View file (for Google Drive files)
+  getViewLink: (fileId: string) => {
+    return `${api.defaults.baseURL}/files/view/${fileId}`;
+  },
+
+  // Direct Google Drive download link
+  getDirectDownloadLink: (file: FileData) => {
+    return file.driveDownloadLink || file.driveViewLink || `${api.defaults.baseURL}/files/download/${file.id}`;
+  },
+
+  // Direct Google Drive view link
+  getDirectViewLink: (file: FileData) => {
+    return file.driveViewLink || `${api.defaults.baseURL}/files/view/${file.id}`;
   }
 };
 

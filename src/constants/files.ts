@@ -5,10 +5,10 @@ export const FILE_CATEGORIES = [
   'Class Notes',
   'Notes(Chotha)',
   'Questions',
-  'Senior Materials',
   'Lab Reports',
   'Reference Books',
-  'Others'
+  'Others',
+  'Senior Materials'
 ];
 
 export const CATEGORY_DETAILS = [
@@ -38,11 +38,6 @@ export const CATEGORY_DETAILS = [
     color: 'from-red-500 to-red-700'
   },
   {
-    name: 'Senior Materials',
-    icon: GraduationCap,
-    color: 'from-yellow-500 to-yellow-700'
-  },
-  {
     name: 'Lab Reports',
     icon: FlaskConical,
     color: 'from-indigo-500 to-indigo-700'
@@ -56,5 +51,10 @@ export const CATEGORY_DETAILS = [
     name: 'Others',
     icon: Archive,
     color: 'from-gray-500 to-gray-700'
+  },
+  {
+    name: 'Senior Materials',
+    icon: GraduationCap,
+    color: 'from-yellow-500 to-yellow-700'
   }
 ];

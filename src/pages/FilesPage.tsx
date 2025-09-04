@@ -234,7 +234,7 @@ const FilesPage: React.FC = () => {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => handlePreview(file)} className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Preview file"><Eye size={16} /></button>
-                        <a href={fileService.getDownloadLink(file.id)} download={file.fileName || `file-${file.id}`} className="flex items-center justify-center p-2 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors" title="Download file"><Download size={16} /></a>
+                        <a href={file.driveDownloadLink || fileService.getDownloadLink(file.id)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-2 bg-cuet-primary-100 dark:bg-cuet-primary-900/50 text-cuet-primary-800 dark:text-cuet-primary-300 rounded-md hover:bg-cuet-primary-200 dark:hover:bg-cuet-primary-900/80 transition-colors" title="Download file"><Download size={16} /></a>
                         {(user?.role === 'admin' || user?.userId === file.uploadedBy?.userId) && (<button onClick={() => handleDeleteFile(file.id)} className="flex items-center justify-center p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors" title="Delete file"><Trash2 size={16} /></button>)}
                       </div>
                     </td>

@@ -1,11 +1,74 @@
 [build]
   command = "npm run build"
   publish = "dist"
-
+  
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--production=false"
+  
+# SPA routing - catch all routes and serve index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[build.environment]
-  NODE_VERSION = "18"
+# API proxy to backend (if needed for development)
+[[redirects]]
+  from = "/api/*"
+  to = "https://ghoorni-backend-2e76.onrender.com/api/:splat"
+  status = 200
+  force = true
+  conditions = {Role = ["admin"], Country = ["US"]}
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://*.railway.app wss://*.railway.app; frame-ancestors 'none';"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache service worker
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Cache manifest and other PWA files
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# Environment-specific redirects for different branches
+[context.production]
+  environment = { VITE_API_URL = "https://your-production-backend.railway.app/api", VITE_VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa40HI8YlOu_7VsgdQUBUKqFZEdgfLGOFkxzcoNvFIMa1nSndDbRAhYAo9xDkw" }
+
+[context.deploy-preview]
+  environment = { VITE_API_URL = "https://your-staging-backend.railway.app/api", VITE_VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa40HI8YlOu_7VsgdQUBUKqFZEdgfLGOFkxzcoNvFIMa1nSndDbRAhYAo9xDkw" }
+
+[context.branch-deploy]
+  environment = { VITE_API_URL = "https://your-dev-backend.railway.app/api" }
+
+# Functions (if you plan to use Netlify Functions)
+[functions]
+  directory = "netlify/functions"
+
+# Build plugins
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+
+# Edge functions (if needed)
+[[edge_functions]]
+  function = "auth"
+  path = "/admin/*"
