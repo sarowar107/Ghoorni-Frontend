@@ -3,6 +3,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
@@ -17,6 +18,8 @@ import QAPage from './pages/QAPage';
 import QuestionDetailPage from './pages/QuestionDetailPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import ProfilePage from './pages/ProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
+import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import CGPACalculatorPage from './pages/CGPACalculatorPage'; // Import the new page
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AuthLayout from './layouts/AuthLayout';
@@ -27,7 +30,8 @@ function App() {
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>
-            <Router>
+            <NotificationProvider>
+              <Router>
             <Routes>
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
@@ -50,7 +54,9 @@ function App() {
                 <Route path="q-a" element={<QAPage />} />
                 <Route path="q-a/:questionId" element={<QuestionDetailPage />} />
                 <Route path="cgpa-calculator" element={<CGPACalculatorPage />} /> {/* Add the new route */}
+                <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="profile/notifications" element={<NotificationSettingsPage />} />
                 <Route 
                   path="admin" 
                   element={
@@ -61,7 +67,8 @@ function App() {
                 />
               </Route>
             </Routes>
-            </Router>
+              </Router>
+            </NotificationProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

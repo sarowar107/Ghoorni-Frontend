@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, FileText, FolderKanban, MessageSquare, Shield, User, X, Calculator } from 'lucide-react'; // Import Calculator icon
+import { LayoutDashboard, FileText, FolderKanban, MessageSquare, Shield, User, X, Calculator, Settings } from 'lucide-react'; // Import Calculator and Settings icons
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -18,7 +18,10 @@ const navItems = [
 ];
 
 const adminNav = { name: 'Admin Panel', path: '/admin', icon: Shield };
-const profileNav = { name: 'Manage Profile', path: '/profile', icon: User };
+const settingsNavItems = [
+  { name: 'Profile', path: '/profile', icon: User },
+  { name: 'Notifications', path: '/profile/notifications', icon: Settings }
+];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user } = useAuth();
@@ -42,7 +45,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         {user?.role === 'admin' && <NavItem item={adminNav} currentPath={location.pathname} />}
       </nav>
       <div className="px-4 py-6 border-t border-gray-200/80 dark:border-dark-border/80">
-        <NavItem item={profileNav} currentPath={location.pathname} />
+        <div className="mb-3">
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Settings</h3>
+        </div>
+        <div className="space-y-1">
+          {settingsNavItems.map((item) => (
+            <NavItem key={item.name} item={item} currentPath={location.pathname} />
+          ))}
+        </div>
       </div>
     </>
   );

@@ -127,13 +127,13 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <Helmet>
-        <title>Manage Profile | Ghoorni</title>
+        <title>Profile | Ghoorni</title>
       </Helmet>
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manage Profile</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Update your account information and settings</p>
           </div>
 

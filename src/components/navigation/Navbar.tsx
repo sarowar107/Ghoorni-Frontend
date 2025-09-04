@@ -1,9 +1,10 @@
 import React, { Fragment } from 'react';
 import { Menu as HeadlessMenu, Transition } from '@headlessui/react';
-import { Sun, Moon, Menu, ChevronDown, User, LogOut } from 'lucide-react';
+import { Sun, Moon, Menu, ChevronDown, User, LogOut, Settings } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import NotificationDropdown from '../notifications/NotificationDropdown';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -28,6 +29,8 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         {/* Can add breadcrumbs or page title here */}
       </div>
       <div className="flex items-center gap-4">
+        <NotificationDropdown />
+        
         <button
           onClick={toggleTheme}
           className="p-2 rounded-full text-gray-600 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
@@ -68,7 +71,20 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                     >
                       <User className="mr-2 h-5 w-5" />
-                      Manage Profile
+                      Profile
+                    </button>
+                  )}
+                </HeadlessMenu.Item>
+                <HeadlessMenu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={() => navigate('/profile/notifications')}
+                      className={`${
+                        active ? 'bg-cuet-primary-900 text-white' : 'text-gray-900 dark:text-dark-text'
+                      } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                    >
+                      <Settings className="mr-2 h-5 w-5" />
+                      Notifications
                     </button>
                   )}
                 </HeadlessMenu.Item>

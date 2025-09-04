@@ -1,4 +1,4 @@
-import { BookOpen, FileText, PenTool, HelpCircle, GraduationCap, FlaskConical, Users, Archive, Presentation } from 'lucide-react';
+import { BookOpen, FileText, PenTool, HelpCircle, GraduationCap, FlaskConical, Archive, Presentation } from 'lucide-react';
 
 export const FILE_CATEGORIES = [
   'Class Lectures',
