@@ -217,18 +217,21 @@ const DashboardPage: React.FC = () => {
             value={eventsNextWeek.toString()} 
             icon={Bell} 
             color="blue" 
+            to="/notices"
           />
           <StatCard 
             title="Total Files" 
             value={files.length.toString()} 
             icon={FileUp} 
             color="green" 
+            to="/files"
           />
           <StatCard 
             title="Open Questions" 
             value={questions.length.toString()} 
             icon={MessageSquarePlus} 
             color="yellow" 
+            to="/q-a"
           />
         </div>
 
@@ -295,14 +298,14 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string, icon: React.ElementType, color: 'blue' | 'green' | 'yellow' }) => {
+const StatCard = ({ title, value, icon: Icon, color, to }: { title: string, value: string, icon: React.ElementType, color: 'blue' | 'green' | 'yellow', to: string }) => {
   const colors: { [key in 'blue' | 'green' | 'yellow']: string } = {
     blue: 'from-blue-500 to-cuet-primary-700',
     green: 'from-emerald-500 to-green-700',
     yellow: 'from-amber-500 to-orange-700',
   };
   return (
-    <div className={`bg-gradient-to-br ${colors[color]} text-white p-6 rounded-xl shadow-lg`}>
+    <Link to={to} className={`block bg-gradient-to-br ${colors[color]} text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 transform hover:-translate-y-1`}>
       <div className="flex justify-between items-start">
         <div>
           <p className="text-sm font-medium opacity-80">{title}</p>
@@ -310,7 +313,7 @@ const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: s
         </div>
         <Icon className="h-8 w-8 opacity-70" />
       </div>
-    </div>
+    </Link>
   );
 };
 

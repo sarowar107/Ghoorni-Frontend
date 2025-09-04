@@ -70,21 +70,8 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                         active ? 'bg-cuet-primary-900 text-white' : 'text-gray-900 dark:text-dark-text'
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                     >
-                      <User className="mr-2 h-5 w-5" />
-                      Profile
-                    </button>
-                  )}
-                </HeadlessMenu.Item>
-                <HeadlessMenu.Item>
-                  {({ active }) => (
-                    <button
-                      onClick={() => navigate('/profile/notifications')}
-                      className={`${
-                        active ? 'bg-cuet-primary-900 text-white' : 'text-gray-900 dark:text-dark-text'
-                      } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                    >
                       <Settings className="mr-2 h-5 w-5" />
-                      Notifications
+                      Settings
                     </button>
                   )}
                 </HeadlessMenu.Item>

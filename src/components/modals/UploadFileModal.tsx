@@ -4,6 +4,7 @@ import { UploadCloud } from 'lucide-react';
 import { User } from '../../contexts/AuthContext';
 import { UploadMetadata } from '../../services/fileService';
 import { FILE_CATEGORIES } from '../../constants/files';
+import { DEPARTMENTS } from '../../constants/departments';
 
 interface UploadFileModalProps {
   isOpen: boolean;
@@ -158,6 +159,22 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({ isOpen, onClose, onFi
             {CATEGORY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
         </div>
+
+        {user.role === 'admin' && (
+          <div>
+            <label htmlFor="toDept" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Department</label>
+            <select
+              id="toDept"
+              value={toDept}
+              onChange={(e) => setToDept(e.target.value)}
+              className={selectStyles}
+              required
+            >
+              <option value="" disabled>Select a department</option>
+              {DEPARTMENTS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </div>
+        )}
 
         {(user.role === 'admin' || user.role === 'teacher') && (
           <div>

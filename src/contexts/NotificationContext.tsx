@@ -74,7 +74,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       setIsLoading(true);
       const [unreadNotifications, recentNotifs, count] = await Promise.all([
         notificationService.getUnreadNotifications(),
-        notificationService.getRecentNotifications(5),
+        notificationService.getRecentNotifications(3), // Limit to 3 recent notifications
         notificationService.getUnreadCount()
       ]);
       
@@ -92,14 +92,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     try {
       console.log('Attempting to enable push notifications...');
       
-      // Check if browser supports push notifications
       const isSupported = await pushNotificationService.isSupported();
       if (!isSupported) {
         showError('Error', 'Push notifications are not supported in this browser');
         return false;
       }
 
-      // Request permission first
       const permission = await pushNotificationService.requestPermission();
       if (permission !== 'granted') {
         showError('Error', 'Push notification permission was denied. Please enable notifications in your browser settings.');
@@ -109,7 +107,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       const subscription = await pushNotificationService.subscribe();
       if (subscription) {
         console.log('Push subscription created successfully');
-        // Send subscription to server
         const success = await pushNotificationService.sendSubscriptionToServer(subscription);
         if (success) {
           setPushEnabled(true);
@@ -135,7 +132,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     try {
       const success = await pushNotificationService.unsubscribe();
       if (success) {
-        // Remove subscription from server
         await pushNotificationService.removeSubscriptionFromServer();
         setPushEnabled(false);
         showSuccess('Push Notifications', 'Push notifications disabled successfully');
@@ -152,29 +148,33 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   };
 
   const markAsRead = async (notificationId: number) => {
+    const notificationToUpdate = recentNotifications.find(n => n.notificationId === notificationId);
+    if (!notificationToUpdate || notificationToUpdate.isRead) {
+      return; // Already read or not found, no action needed
+    }
+
+    const originalRecent = [...recentNotifications];
+    const originalCount = unreadCount;
+
+    // Optimistic UI update for instant feedback
+    setRecentNotifications(prev => 
+      prev.map(notification => 
+        notification.notificationId === notificationId 
+          ? { ...notification, isRead: true }
+          : notification
+      )
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+
     try {
+      // Perform API call in the background
       await notificationService.markAsRead(notificationId);
-      
-      // Immediately update the state to reflect the change
-      setRecentNotifications(prev => 
-        prev.map(notification => 
-          notification.notificationId === notificationId 
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
-            : notification
-        )
-      );
-      
-      setNotifications(prev => 
-        prev.filter(notification => notification.notificationId !== notificationId)
-      );
-      
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      // Refresh to sync with server state
-      await refreshNotifications();
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
       showError('Error', 'Failed to mark notification as read');
+      // Rollback UI on failure
+      setRecentNotifications(originalRecent);
+      setUnreadCount(originalCount);
     }
   };
 

@@ -1,0 +1,15 @@
+export const DEPARTMENTS = [
+  { value: 'ALL', label: 'All Departments' },
+  { value: 'CSE', label: 'Computer Science & Engineering' },
+  { value: 'EEE', label: 'Electrical & Electronic Engineering' },
+  { value: 'ME', label: 'Mechanical Engineering' },
+  { value: 'CE', label: 'Civil Engineering' },
+  { value: 'ETE', label: 'Electronics & Telecommunication Engineering' },
+  { value: 'PME', label: 'Petroleum & Mining Engineering' },
+  { value: 'URP', label: 'Urban & Regional Planning' },
+  { value: 'ARCH', label: 'Architecture' },
+  { value: 'MIE', label: 'Mechatronics & Industrial Engineering' },
+  { value: 'WRE', label: 'Water Resources Engineering' },
+  { value: 'BME', label: 'Biomedical Engineering' },
+  { value: 'MSE', label: 'Materials Science & Engineering' },
+];

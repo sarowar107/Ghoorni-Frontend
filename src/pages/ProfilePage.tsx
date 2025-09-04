@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { User, Lock, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Lock, Trash2, CheckCircle, AlertCircle, Bell, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AlertProps {
@@ -127,13 +127,13 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <Helmet>
-        <title>Profile | Ghoorni</title>
+        <title>Settings | Ghoorni</title>
       </Helmet>
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">Update your account information and settings</p>
           </div>
 
@@ -156,6 +156,24 @@ const ProfilePage: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Notification Settings Section */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <Bell className="mr-3 text-blue-500" size={20} />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Settings</h2>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Manage your notification preferences for different types of activities.
+              </p>
+              <button
+                onClick={() => navigate('/profile/notifications')}
+                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                <span>Manage Notifications</span>
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </button>
             </div>
 
             {/* Update Name Section */}

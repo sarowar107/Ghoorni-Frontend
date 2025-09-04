@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, FileText, FolderKanban, MessageSquare, Shield, User, X, Calculator, Settings } from 'lucide-react'; // Import Calculator and Settings icons
+import { LayoutDashboard, FileText, FolderKanban, MessageSquare, Shield, X, Calculator, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -14,13 +14,12 @@ const navItems = [
   { name: 'Notices', path: '/notices', icon: FileText },
   { name: 'Files', path: '/files', icon: FolderKanban },
   { name: 'Q & A', path: '/q-a', icon: MessageSquare },
-  { name: 'CGPA Calculator', path: '/cgpa-calculator', icon: Calculator }, // Add new nav item
+  { name: 'CGPA Calculator', path: '/cgpa-calculator', icon: Calculator },
 ];
 
 const adminNav = { name: 'Admin Panel', path: '/admin', icon: Shield };
 const settingsNavItems = [
-  { name: 'Profile', path: '/profile', icon: User },
-  { name: 'Notifications', path: '/profile/notifications', icon: Settings }
+  { name: 'Settings', path: '/profile', icon: Settings }
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
@@ -46,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       </nav>
       <div className="px-4 py-6 border-t border-gray-200/80 dark:border-dark-border/80">
         <div className="mb-3">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Settings</h3>
+          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Account</h3>
         </div>
         <div className="space-y-1">
           {settingsNavItems.map((item) => (
@@ -93,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 };
 
 const NavItem = ({ item, currentPath }: { item: { name: string; path: string; icon: React.ElementType }, currentPath: string }) => {
-  const isActive = currentPath === item.path;
+  const isActive = currentPath.startsWith(item.path) && (item.path !== '/' || currentPath === '/');
   return (
     <NavLink
       to={item.path}
