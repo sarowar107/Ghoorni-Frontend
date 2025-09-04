@@ -17,8 +17,7 @@
   from = "/api/*"
   to = "https://ghoorni-backend-2e76.onrender.com/api/:splat"
   status = 200
-  force = true
-  conditions = {Role = ["admin"], Country = ["US"]}
+  force = false
 
 # Security headers
 [[headers]]
@@ -28,7 +27,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://*.railway.app wss://*.railway.app; frame-ancestors 'none';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://*.railway.app wss://*.railway.app https://*.onrender.com; frame-ancestors 'none';"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
 
@@ -52,7 +51,7 @@
 
 # Environment-specific redirects for different branches
 [context.production]
-  environment = { VITE_API_URL = "https://your-production-backend.railway.app/api", VITE_VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa40HI8YlOu_7VsgdQUBUKqFZEdgfLGOFkxzcoNvFIMa1nSndDbRAhYAo9xDkw" }
+  environment = { VITE_API_URL = "https://ghoorni-backend-2e76.onrender.com/api", VITE_VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa40HI8YlOu_7VsgdQUBUKqFZEdgfLGOFkxzcoNvFIMa1nSndDbRAhYAo9xDkw" }
 
 [context.deploy-preview]
   environment = { VITE_API_URL = "https://your-staging-backend.railway.app/api", VITE_VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa40HI8YlOu_7VsgdQUBUKqFZEdgfLGOFkxzcoNvFIMa1nSndDbRAhYAo9xDkw" }

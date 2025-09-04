@@ -1,8 +1,5 @@
-// API configuration - Use environment variables with fallbacks
-export const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'production' 
-    ? 'https://your-production-backend.railway.app/api' 
-    : 'http://localhost:8080/api');
+// API configuration - Hardcoded for now
+export const API_URL = 'https://ghoorni-backend-2e76.onrender.com/api';
 
 // VAPID public key for push notifications
 export const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI8YlOu_7VsgdQUBUKqFZEdgfLGOFkxzcoNvFIMa1nSndDbRAhYAo9xDkw';
