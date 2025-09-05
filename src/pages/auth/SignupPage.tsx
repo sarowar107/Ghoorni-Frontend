@@ -52,8 +52,8 @@ const SignupPage: React.FC = () => {
         setError('Please use your CUET Teacher email address');
         setIsLoading(false);
         return;
-      } else if (selectedRole === 'Student' && !email.endsWith('@student.cuet.ac.bd')) {
-        setError('Please use your CUET Student email address');
+      } else if ((selectedRole === 'Student' || selectedRole === 'CR') && !email.endsWith('@student.cuet.ac.bd')) {
+        setError(selectedRole === 'CR' ? 'Please use your CUET Student email address for CR registration' : 'Please use your CUET Student email address');
         setIsLoading(false);
         return;
       }
@@ -76,8 +76,12 @@ const SignupPage: React.FC = () => {
           return;
         }
         
-        // Here you would verify the CR verification code with your backend
-        // For now, we'll just proceed with signup assuming verification succeeded
+        // Verify CR verification code
+        if (crVerificationCode.trim() !== 'CR001') {
+          setError('Wrong CR verification code. Please contact admin for CR verification code.');
+          setIsLoading(false);
+          return;
+        }
       }
       
       // Submit the form data using the auth context
